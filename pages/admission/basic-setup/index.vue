@@ -14,9 +14,11 @@ const { fetchClassSetupIndex, fetchSubjectSetupIndex, saveClassSetup, saveSubjec
 const toast = useToast();
 const confirm = useConfirm();
 const classList = ref();
-const groupList = ref();
+const centerList = ref();
+const instituteList = ref();
 const selectedClass = ref();
-const selectedGroups = ref([]);
+const selectedCenter = ref();
+const selectedInstitutes = ref([]);
 
 const classForSubjects = ref();
 const groupForSubjects = ref();
@@ -30,6 +32,7 @@ const visible = ref(false);
 const selectedClassData = ref();
 const updateCompulsorySubjects = ref([]);
 const updateGroupSubjects = ref([]);
+
 // Function to find subjects in `subjectSetupIndex`
 function findSubjects(subjectNames, subjectSetupIndex) {
     return subjectNames.map((subjectName) => subjectSetupIndex.value?.subjectList.find((subject) => subject.subject_name === subjectName)).filter(Boolean); // Filter out any subjects that were not found
@@ -92,8 +95,8 @@ const classSetupRequest = async () => {
     try {
         classSetupData.class_id = selectedClass.value.subcategory_id;
         classSetupData.class_name = selectedClass.value.subcategory_name;
-        classSetupData.group_id = selectedGroups.value.map((elem) => elem.subcategory_id);
-        classSetupData.group_name = selectedGroups.value.map((elem) => elem.subcategory_name);
+        classSetupData.group_id = selectedInstitutes.value.map((elem) => elem.subcategory_id);
+        classSetupData.group_name = selectedInstitutes.value.map((elem) => elem.subcategory_name);
 
         const { status, message, error } = await saveClassSetup(classSetupData);
         if (status === 'success') {
@@ -105,7 +108,7 @@ const classSetupRequest = async () => {
         console.error(error);
         toast.add({ severity: 'error', summary: 'Error Message', detail: 'An unexpected error occured!', group: 'br', life: 5000 });
     } finally {
-        (selectedClass.value = null), (selectedGroups.value = []), (classSetupData.class_id = null), (classSetupData.class_name = null), (classSetupData.group_id = []), (classSetupData.group_name = []);
+        (selectedClass.value = null), (selectedInstitutes.value = []), (classSetupData.class_id = null), (classSetupData.class_name = null), (classSetupData.group_id = []), (classSetupData.group_name = []);
         await fetchClassSetupIndex();
         await fetchSubjectSetupIndex();
     }
@@ -140,7 +143,7 @@ const subjectSetupRequest = async () => {
         console.error(error);
         toast.add({ severity: 'error', summary: 'Error Message', detail: 'An unexpected error occured!', group: 'br', life: 5000 });
     } finally {
-        (selectedClass.value = null), (selectedGroups.value = []), (classSetupData.class_id = null), (classSetupData.class_name = null), (classSetupData.group_id = []), (classSetupData.group_name = []);
+        (selectedClass.value = null), (selectedInstitutes.value = []), (classSetupData.class_id = null), (classSetupData.class_name = null), (classSetupData.group_id = []), (classSetupData.group_name = []);
         (subjectSetupData.class_id = null),
             (subjectSetupData.group_id = null),
             (subjectSetupData.class_name = null),
@@ -202,10 +205,15 @@ onMounted(async () => {
         classList.value = classCategory.subcategories;
     }
 
-    const groupCategory = classSetupIndex.value.admission_startup.find((category) => category.category_name == 'Group');
+    const centerCategory = classSetupIndex.value.admission_startup.find((category) => category.category_name == 'Center');
+    if (centerCategory) {
+        centerList.value = centerCategory.subcategories;
+    }
 
-    if (groupCategory) {
-        groupList.value = groupCategory.subcategories;
+    const instCategory = classSetupIndex.value.admission_startup.find((category) => category.category_name == 'Institute');
+
+    if (instCategory) {
+        instituteList.value = instCategory.subcategories;
     }
 });
 
@@ -217,7 +225,6 @@ useVisibilityChange(async () => {
 </script>
 <template>
     <Toast position="bottom-right" group="br" />
-
     <TabView>
         <TabPanel header="Class Setup">
             <div class="card">
@@ -234,8 +241,19 @@ useVisibilityChange(async () => {
                     </div>
 
                     <div class="col-12 md:col-4 mb-3">
-                        <label for="className">Select Groups</label>
-                        <MultiSelect v-model="selectedGroups" display="chip" :options="groupList" optionLabel="subcategory_name" placeholder="Select Groups" :maxSelectedLabels="3" class="w-full">
+                        <label for="className">Select Center</label>
+                        <Dropdown v-model="selectedCenter" :options="centerList" optionLabel="subcategory_name" placeholder="Select center" checkmark :highlightOnSelect="false" class="w-full capitalize">
+                            <template #option="slotProps">
+                                <div class="capitalize">
+                                    <div>{{ slotProps.option.subcategory_name }}</div>
+                                </div>
+                            </template>
+                        </Dropdown>
+                    </div>
+
+                    <div class="col-12 md:col-4 mb-3">
+                        <label for="className">Select Institutes</label>
+                        <MultiSelect v-model="selectedInstitutes" display="chip" :options="instituteList" optionLabel="subcategory_name" placeholder="Select Institutes" :maxSelectedLabels="3" class="w-full">
                             <template #option="slotProps">
                                 <div class="capitalize">
                                     <div>{{ slotProps.option.subcategory_name }}</div>
@@ -245,7 +263,7 @@ useVisibilityChange(async () => {
                     </div>
 
                     <div class="col-12 md:col-4 mb-3">
-                        <Button label="Save" @click="classSetupRequest" size="small" icon="pi pi-check-circle" :loading="loading" :disabled="!selectedClass || !selectedGroups.length" />
+                        <Button label="Save" @click="classSetupRequest" size="small" icon="pi pi-check-circle" :loading="loading" :disabled="!selectedClass || !selectedInstitutes.length" />
                     </div>
                 </div>
             </div>
@@ -277,7 +295,7 @@ useVisibilityChange(async () => {
                 </DataTable>
             </div>
         </TabPanel>
-        <TabPanel header="Subject Setup">
+        <!-- <TabPanel header="Subject Setup">
             <div class="card">
                 <div class="grid align-items-end">
                     <div class="col-12 md:col-3 mb-3">
@@ -353,17 +371,6 @@ useVisibilityChange(async () => {
                             </template>
                         </MultiSelect>
                     </div>
-
-                    <!-- <div class="col-12 md:col-4 mb-3">
-                        <label for="className">Select Optional Subjects</label>
-                        <MultiSelect display="chip" v-model="optionalSubjects" :options="filteredOptionalSubjects" optionLabel="subject_name" placeholder="Optional Subjects" checkmark :highlightOnSelect="false" class="w-full capitalize" :disabled="!classForSubjects || !groupForSubjects">
-                            <template #option="slotProps">
-                                <div class="capitalize">
-                                    <div>{{ slotProps.option.subject_name }}</div>
-                                </div>
-                            </template>
-                        </MultiSelect>
-                    </div> -->
 
                     <div class="col-12 md:col-4 mb-3">
                         <Button label="Assign Subjects" @click="subjectSetupRequest" size="small" icon="pi pi-check-circle" :loading="loading" :disabled="!compulsorySubjects.length" />
@@ -459,6 +466,6 @@ useVisibilityChange(async () => {
                     </div>
                 </Dialog>
             </div>
-        </TabPanel>
+        </TabPanel> -->
     </TabView>
 </template>

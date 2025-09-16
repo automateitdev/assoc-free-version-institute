@@ -109,12 +109,10 @@ async function submitCoreCategory() {
 
 <template>
     <Toast position="bottom-right" group="br" />
-
     <div>
         <div class="card">
             <form action="" @submit.prevent="handleForm">
                 <div class="grid">
-                    {{ classSetupIndex }}
                     <div class="md:col-4">
                         <label for="" class="mb-2"><b>Category Type : </b></label> <br />
                         <Dropdown class="w-full" filter :options="classSetupIndex.category_set" optionLabel="core_category_name" placeholder="Select a Category" v-model="formData.core_category_id" @change="getSubcategoryByCategory" />
