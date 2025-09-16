@@ -44,7 +44,7 @@ const { fetchadmissionConfig, fetchStudentDataByRoll, fetchDivisions, fetchDistr
 const addressSameAsPresent = ref(false);
 const ins_response = ref();
 const classOpts = ref([]);
-const shiftGroupOpts = ref([]);
+const CenterInstiuteOpts = ref([]);
 const genderOpts = ref(['Male', 'Female', 'Others']);
 const religionOpts = ref(['Islam', 'Hinduism', 'Christianity', 'Buddhism', 'Others']);
 const bloodOpts = ref(['A+', 'B+', 'O+', 'AB+', 'A-', 'B-', 'O-', 'AB-']);
@@ -84,8 +84,8 @@ const getStudentInfo = async () => {
                 studentByRollFound.value = true;
                 subjectSearchForm.institute_details_id = admissionConfig.value.instiute_details.id;
                 (formData.academic_year = studentDataByRoll.value.admission_payment.academic_year),
-                    (formData.shift = studentDataByRoll.value.admission_payment.shift),
-                    (formData.group = studentDataByRoll.value.admission_payment.group),
+                    (formData.center = studentDataByRoll.value.admission_payment.center),
+                    (formData.institute = studentDataByRoll.value.admission_payment.group),
                     (formData.class = studentDataByRoll.value.admission_payment.class),
                     (formData.student_name_english = studentDataByRoll.value.name),
                     (formData.edu_information[0].exam = studentDataByRoll.value.roll ? 'SSC' : ''),
@@ -159,7 +159,7 @@ const formData = reactive({
     guardian_property: null,
     academic_year: null,
     class: null,
-    shift: null,
+    center: null,
     group: null,
     compulsorySubjects: [],
     groupSubjects: [],
@@ -278,10 +278,10 @@ watch(
     () => formData.class,
     async (newVal) => {
         if (!studentByRollFound) {
-            formData.shift = null;
-            formData.group = null;
+            formData.center = null;
+            formData.institute = null;
         }
-        shiftGroupOpts.value = classOpts.value.details.find((elem) => elem.class == newVal);
+        CenterInstiuteOpts.value = classOpts.value.details.find((elem) => elem.class == newVal);
     }
 );
 
@@ -318,8 +318,6 @@ function isSubjectFilled() {
         return (
             formData.subject.hasOwnProperty('compulsory') &&
             formData.subject.compulsory.length > 0
-            // && formData.subject.hasOwnProperty('group') &&
-            // formData.subject.group.length > 0
         );
     } else {
         return true
@@ -388,31 +386,31 @@ const customUploader = async (param) => {
 const subjectSearchForm = reactive({
     institute_details_id: null,
     class: null,
-    shift: null,
-    group: null
+    center: null,
+    institute: null
 });
 
 const compulsorySubjOpts = ref([]);
-const groupSubjOpts = ref([]);
+const instituteSubjOpts = ref([]);
 
 const getSubjects = async () => {
     subjectSearchForm.institute_details_id = admissionConfig.value.instiute_details.id;
     subjectSearchForm.academic_year = formData.academic_year;
     subjectSearchForm.class = formData.class;
-    subjectSearchForm.shift = formData.shift;
-    subjectSearchForm.group = formData.group;
+    subjectSearchForm.center = formData.center;
+    subjectSearchForm.institute = formData.institute;
 
     await fetchYearwiseSubject(subjectSearchForm);
     compulsorySubjOpts.value = JSON.parse(subjectList.value.compulsory.replace(/'/g, '"'));
-    groupSubjOpts.value = JSON.parse(subjectList.value.group.replace(/'/g, '"'));
+    instituteSubjOpts.value = JSON.parse(subjectList.value.group.replace(/'/g, '"'));
     formData.compulsorySubjects = compulsorySubjOpts.value;
     formData.subject.compulsory = compulsorySubjOpts.value;
 };
 
 watch(
-    () => [formData.group, formData.academic_year, formData.class, formData.shift],
-    async ([newGroup, newAcademicYear, newClass, newShift]) => {
-        if (newGroup && newAcademicYear && newClass && newShift) {
+    () => [formData.institute, formData.academic_year, formData.class, formData.center],
+    async ([newinstitute, newAcademicYear, newClass, newCenter]) => {
+        if (newinstitute && newAcademicYear && newClass && newCenter) {
             if (admissionConfig.value.subject_status == 'YES') {
                 await  getSubjects();
             }
@@ -420,33 +418,14 @@ watch(
     }
 );
 
-// watch(
-//     () => formData.group,
-//     async (newVal) => {
-//         if (newVal) {
-//             subjectSearchForm.institute_details_id = admissionConfig.value.instiute_details.id;
-//             subjectSearchForm.academic_year = formData.academic_year;
-//             subjectSearchForm.class = formData.class;
-//             subjectSearchForm.shift = formData.shift;
-//             subjectSearchForm.group = formData.group;
-
-//             await fetchYearwiseSubject(subjectSearchForm);
-//             compulsorySubjOpts.value = JSON.parse(subjectList.value.compulsory.replace(/'/g, '"'));
-//             groupSubjOpts.value = JSON.parse(subjectList.value.group.replace(/'/g, '"'));
-//             formData.compulsorySubjects = compulsorySubjOpts.value;
-//             formData.subject.compulsory = compulsorySubjOpts.value;
-//         }
-//     }
-// );
-
 const availableGroupSubjects = computed(() => {
-    formData.subject.group = formData.groupSubjects;
-    return groupSubjOpts.value.filter((subject) => !formData.optionalSubjects.includes(subject));
+    formData.subject.group = formData.instituteSubjects;
+    return instituteSubjOpts.value.filter((subject) => !formData.optionalSubjects.includes(subject));
 });
 
 const availableOptionalSubjects = computed(() => {
     formData.subject.optional = formData.optionalSubjects;
-    return groupSubjOpts.value.filter((subject) => !formData.groupSubjects.includes(subject));
+    return instituteSubjOpts.value.filter((subject) => !formData.instituteSubjects.includes(subject));
 });
 
 const croppingImageUrl = ref();
@@ -486,7 +465,7 @@ function onFileSelect($event, type) {
 }
 
 const requiredFields = [
-    'student_name_bangla',
+    // 'student_name_bangla',
     'student_name_english',
     'student_mobile',
     'date_of_birth',
@@ -509,8 +488,8 @@ const requiredFields = [
     'permanent_post_office',
     'academic_year',
     'class',
-    'shift',
-    'group',
+    'center',
+    'institute',
     // 'subject',
     'student_pic'
     // 'student_birth_nid_file'
@@ -544,12 +523,107 @@ definePageMeta({
                     <div class="mx-auto my-3" v-if="admissionConfig?.form == 'YES' || studentByRollFound">
                         <Button icon="pi pi-refresh" label="Refresh" size="small" severity="secondary" @click="refresh" />
                         <div>
-                            <Message severity="success" icon="pi pi-user" :closable="false">Student Information</Message>
+
+                            <Message severity="success" icon="pi pi-book" :closable="false" class="mt-5">Academic Information</Message>
                             <div class="grid">
                                 <div class="col-12 md:col-3">
+                                    <label for="year-session">Year / Session <span style="color: tomato"> * </span></label>
+                                    <Dropdown
+                                        filter
+                                        id="permanentPS"
+                                        :options="admissionConfig?.details"
+                                        v-model="formData.academic_year"
+                                        optionLabel="academic_year"
+                                        optionValue="academic_year"
+                                        placeholder="Select Academic year"
+                                        class="w-full capitalize"
+                                        :disabled="studentDataByRoll?.admission_payment?.academic_year"
+                                    >
+                                        <template #option="slotProps">
+                                            <div class="capitalize">{{ slotProps.option.academic_year }}</div>
+                                        </template>
+                                    </Dropdown>
+                                </div>
+                                <div class="col-12 md:col-3">
+                                    <label for="class">Class <span style="color: tomato"> * </span></label>
+                                    <Dropdown
+                                        filter
+                                        v-model="formData.class"
+                                        :options="classOpts.details"
+                                        optionLabel="class"
+                                        optionValue="class"
+                                        placeholder="Select Class"
+                                        class="w-full capitalize"
+                                        :disabled="!formData.academic_year || studentDataByRoll?.admission_payment?.class"
+                                    >
+                                        <template #option="slotProps">
+                                            <div class="capitalize">{{ slotProps.option.class }}</div>
+                                        </template>
+                                    </Dropdown>
+                                </div>
+
+                                <div class="col-12 md:col-3">
+                                    <label for="class">Center <span style="color: tomato"> * </span></label>
+                                    <Dropdown filter v-model="formData.center" :options="CenterInstiuteOpts?.centers" placeholder="Select Center" class="w-full capitalize" :disabled="!formData.class || studentDataByRoll?.admission_payment?.institute">
+                                        <template #option="slotProps">
+                                            <div class="capitalize">{{ slotProps.option }}</div>
+                                        </template>
+                                    </Dropdown>
+                                </div>
+
+                                <div class="col-12 md:col-3">
+                                    <label for="class">Institute <span style="color: tomato"> * </span></label>
+                                    <Dropdown filter v-model="formData.institute" :options="CenterInstiuteOpts?.institutes" placeholder="Select Group" class="w-full capitalize" :disabled="!formData.center || studentDataByRoll?.admission_payment?.institute">
+                                        <template #option="slotProps">
+                                            <div class="capitalize">{{ slotProps.option }}</div>
+                                        </template>
+                                    </Dropdown>
+                                </div>
+
+                                <div class="col-12" v-if="admissionConfig?.subject_status == 'YES'">
+                                    <label for="className">Compulsory Subjects</label>
+                                    <MultiSelect filter checkmark display="chip" v-model="formData.compulsorySubjects" :options="compulsorySubjOpts" placeholder="Compulsory Subjects" class="w-full capitalize" :disabled="compulsorySubjOpts">
+                                    </MultiSelect>
+                                </div>
+
+                                <div class="col-12" v-if="admissionConfig?.subject_status == 'YES'">
+                                    <label for="className">Choose Group Subjects</label>
+                                    <MultiSelect
+                                        filter
+                                        checkmark
+                                        display="chip"
+                                        v-model="formData.instituteSubjects"
+                                        :options="availableGroupSubjects"
+                                        placeholder="Group Subjects"
+                                        class="w-full capitalize"
+                                        :disabled="!instituteSubjOpts"
+                                        :selectionLimit="3"
+                                    ></MultiSelect>
+                                </div>
+
+                                <div class="col-12" v-if="admissionConfig?.subject_status == 'YES'">
+                                    <label for="className">Choose Optional Subjects</label>
+                                    <MultiSelect
+                                        filter
+                                        checkmark
+                                        display="chip"
+                                        v-model="formData.optionalSubjects"
+                                        :options="availableOptionalSubjects"
+                                        placeholder="Optional Subjects"
+                                        class="w-full capitalize"
+                                        :disabled="!instituteSubjOpts"
+                                        :selectionLimit="1"
+                                    >
+                                    </MultiSelect>
+                                </div>
+                            </div>
+
+                            <Message severity="success" icon="pi pi-user" :closable="false">Student Information</Message>
+                            <div class="grid">
+                                <!-- <div class="col-12 md:col-3">
                                     <label for="student-name-bangla">Name of Student (Bangla) <span style="color: tomato"> * </span></label>
                                     <InputText id="student-name-bangla" v-model="formData.student_name_bangla" class="w-full" placeholder="Student Name (Bangla)" />
-                                </div>
+                                </div> -->
                                 <div class="col-12 md:col-3">
                                     <label for="student-name-english">Name of Student (English) <span style="color: tomato"> * </span></label>
                                     <InputText id="student-name-english" v-model="formData.student_name_english" class="w-full" placeholder="Student Name (English)" />
@@ -589,16 +663,16 @@ definePageMeta({
                                     <Dropdown id="stdBlood" :options="bloodOpts" v-model="formData.blood_group" placeholder="Select Blood Group" class="w-full" />
                                 </div>
 
-                                <div class="col-12 md:col-3">
+                                <!-- <div class="col-12 md:col-3">
                                     <label for="stdMarriage">Marital Status</label>
                                     <Dropdown id="stdMarriage" :options="maritalOpts" v-model="formData.merital_status" placeholder="Select Marital Status" class="w-full" />
-                                </div>
+                                </div> -->
 
                                 <div class="col-12"><hr /></div>
-                                <div class="col-12 md:col-3">
+                                <!-- <div class="col-12 md:col-3">
                                     <label for="father-name-bangla">Father's Name (Bangla)</label>
                                     <InputText id="father-name-bangla" v-model="formData.father_name_bangla" class="w-full" placeholder="Father Name (Bangla)" />
-                                </div>
+                                </div> -->
                                 <div class="col-12 md:col-3">
                                     <label for="father-name-english">Father's Name (English) <span style="color: tomato"> * </span></label>
                                     <InputText id="father-name-english" v-model="formData.father_name_english" class="w-full" placeholder="Father Name (English)" />
@@ -613,10 +687,10 @@ definePageMeta({
                                     <InputText id="father-mobile" v-model="formData.father_mobile" class="w-full" placeholder="Father's Contact" />
                                 </div>
 
-                                <div class="col-12 md:col-3">
+                                <!-- <div class="col-12 md:col-3">
                                     <label for="mother-name-bangla">Mother's Name (Bangla)</label>
                                     <InputText id="mother-name-bangla" v-model="formData.mother_name_bangla" class="w-full" placeholder="Mother Name (Bangla)" />
-                                </div>
+                                </div> -->
 
                                 <div class="col-12 md:col-3">
                                     <label for="mother-name-english">Mother's Name (English) <span style="color: tomato"> * </span></label>
@@ -768,7 +842,7 @@ definePageMeta({
                                 </div>
                             </div>
 
-                            <Message severity="success" icon="pi pi-users" :closable="false" class="mt-5">Guardian Information</Message>
+                            <!-- <Message severity="success" icon="pi pi-users" :closable="false" class="mt-5">Guardian Information</Message>
                             <div class="grid">
                                 <div class="col-12 md:col-4">
                                     <label for="guardian-name">Guardian Name</label>
@@ -796,100 +870,10 @@ definePageMeta({
                                     <label for="guardian-property">Property</label>
                                     <InputText id="guardian-property" v-model="formData.guardian_property" class="w-full" placeholder="Guardian Property" />
                                 </div>
-                            </div>
-                            <Message severity="success" icon="pi pi-book" :closable="false" class="mt-5">Academic Information</Message>
-                            <div class="grid">
-                                <div class="col-12 md:col-3">
-                                    <label for="year-session">Year / Session <span style="color: tomato"> * </span></label>
-                                    <Dropdown
-                                        filter
-                                        id="permanentPS"
-                                        :options="admissionConfig?.details"
-                                        v-model="formData.academic_year"
-                                        optionLabel="academic_year"
-                                        optionValue="academic_year"
-                                        placeholder="Select Academic year"
-                                        class="w-full capitalize"
-                                        :disabled="studentDataByRoll?.admission_payment?.academic_year"
-                                    >
-                                        <template #option="slotProps">
-                                            <div class="capitalize">{{ slotProps.option.academic_year }}</div>
-                                        </template>
-                                    </Dropdown>
-                                </div>
-                                <div class="col-12 md:col-3">
-                                    <label for="class">Class <span style="color: tomato"> * </span></label>
-                                    <Dropdown
-                                        filter
-                                        v-model="formData.class"
-                                        :options="classOpts.details"
-                                        optionLabel="class"
-                                        optionValue="class"
-                                        placeholder="Select Class"
-                                        class="w-full capitalize"
-                                        :disabled="!formData.academic_year || studentDataByRoll?.admission_payment?.class"
-                                    >
-                                        <template #option="slotProps">
-                                            <div class="capitalize">{{ slotProps.option.class }}</div>
-                                        </template>
-                                    </Dropdown>
-                                </div>
+                            </div> -->
 
-                                <div class="col-12 md:col-3">
-                                    <label for="class">Shift <span style="color: tomato"> * </span></label>
-                                    <Dropdown filter v-model="formData.shift" :options="shiftGroupOpts?.shifts" placeholder="Select Shift" class="w-full capitalize" :disabled="!formData.class || studentDataByRoll?.admission_payment?.group">
-                                        <template #option="slotProps">
-                                            <div class="capitalize">{{ slotProps.option }}</div>
-                                        </template>
-                                    </Dropdown>
-                                </div>
 
-                                <div class="col-12 md:col-3">
-                                    <label for="class">Group <span style="color: tomato"> * </span></label>
-                                    <Dropdown filter v-model="formData.group" :options="shiftGroupOpts?.groups" placeholder="Select Group" class="w-full capitalize" :disabled="!formData.shift || studentDataByRoll?.admission_payment?.group">
-                                        <template #option="slotProps">
-                                            <div class="capitalize">{{ slotProps.option }}</div>
-                                        </template>
-                                    </Dropdown>
-                                </div>
-
-                                <div class="col-12" v-if="admissionConfig?.subject_status == 'YES'">
-                                    <label for="className">Compulsory Subjects</label>
-                                    <MultiSelect filter checkmark display="chip" v-model="formData.compulsorySubjects" :options="compulsorySubjOpts" placeholder="Compulsory Subjects" class="w-full capitalize" :disabled="compulsorySubjOpts">
-                                    </MultiSelect>
-                                </div>
-
-                                <div class="col-12" v-if="admissionConfig?.subject_status == 'YES'">
-                                    <label for="className">Choose Group Subjects</label>
-                                    <MultiSelect
-                                        filter
-                                        checkmark
-                                        display="chip"
-                                        v-model="formData.groupSubjects"
-                                        :options="availableGroupSubjects"
-                                        placeholder="Group Subjects"
-                                        class="w-full capitalize"
-                                        :disabled="!groupSubjOpts"
-                                        :selectionLimit="3"
-                                    ></MultiSelect>
-                                </div>
-
-                                <div class="col-12" v-if="admissionConfig?.subject_status == 'YES'">
-                                    <label for="className">Choose Optional Subjects</label>
-                                    <MultiSelect
-                                        filter
-                                        checkmark
-                                        display="chip"
-                                        v-model="formData.optionalSubjects"
-                                        :options="availableOptionalSubjects"
-                                        placeholder="Optional Subjects"
-                                        class="w-full capitalize"
-                                        :disabled="!groupSubjOpts"
-                                        :selectionLimit="1"
-                                    >
-                                    </MultiSelect>
-                                </div>
-                            </div>
+                            
 
                             <Message severity="success" icon="pi pi-pencil" :closable="false" class="mt-5"  v-if="admissionConfig?.academic_info_status == 'YES'">Educational Qualifications <span style="color: tomato"> * (Atleast One Required)</span></Message>
                             <div  v-if="admissionConfig?.academic_info_status == 'YES'" class="mb-3">
@@ -941,7 +925,7 @@ definePageMeta({
                             </div>
                             <Button label="Add More" @click="addQualification" icon="pi pi-plus-circle" severity="secondary" size="small" v-if="admissionConfig?.academic_info_status == 'YES'"/>
 
-                            <Message severity="success" icon="pi pi-bookmark" :closable="false" class="mt-5">Quota Information</Message>
+                            <!-- <Message severity="success" icon="pi pi-bookmark" :closable="false" class="mt-5">Quota Information</Message>
                             <div class="card flex flex-wrap gap-3">
                                 <div class="flex align-items-center">
                                     <RadioButton v-model="formData.quota" inputId="ingredient1" name="quota" value="Freedom Fighter" @change="otherQuota = false" />
@@ -956,7 +940,7 @@ definePageMeta({
                                     <label for="ingredient3" class="ml-2">Other</label>
                                     <InputText v-model="formData.quota" placeholder="Name the quota" class="w-full mx-2" v-if="otherQuota" />
                                 </div>
-                            </div>
+                            </div> -->
 
                             <!-- <Message severity="success" icon="pi pi-check-square" :closable="false" class="mt-5">Covid-19 Vaccine Information</Message>
                             <div class="card flex flex-wrap">
