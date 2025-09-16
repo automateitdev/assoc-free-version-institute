@@ -1,0 +1,10 @@
+.vue__time-picker {
+    width: 100% !important;
+}
+.vue__time-picker input {
+    width: 100% !important;
+}
+.vue__time-picker .dropdown,
+.vue__time-picker .dropdown .select-list {
+    width: 100% !important;
+}

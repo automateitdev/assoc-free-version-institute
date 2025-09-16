@@ -1,0 +1,35 @@
+{
+    "common": [
+        {
+          "subject_id": 1,  
+            "type": 1,
+            "merge_id": 2,
+            "serial": 1
+        },
+        {
+            "subject_id": 2,
+            "type": 4,
+            "merge_id": 1,
+            "serial": 1
+        }
+    ],
+    "group_wise": [
+        {
+            "subject_id": 11,
+            "type": 1,
+            "merge_id": 2,
+            "serial": 1,
+            "group_id": 2
+        },
+        {
+            "subject_id": 20,
+            "type": 4,
+            "merge_id": 1,
+            "serial": 1,
+            "group_id": 3
+        }
+    ]
+}
+
+
+
