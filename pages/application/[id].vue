@@ -958,7 +958,7 @@ definePageMeta({
                                 </div>
                             </div>
 
-                            <Message severity="success" icon="pi pi-check-square" :closable="false" class="mt-5">Covid-19 Vaccine Information</Message>
+                            <!-- <Message severity="success" icon="pi pi-check-square" :closable="false" class="mt-5">Covid-19 Vaccine Information</Message>
                             <div class="card flex flex-wrap">
                                 <div class="col-12 md:col-4">
                                     <label for="vaccinated">Vaccinated?</label>
@@ -981,7 +981,7 @@ definePageMeta({
                                         chooseLabel="Vaccine Certificate"
                                     />
                                 </div>
-                            </div>
+                            </div> -->
 
                             <Message severity="success" icon="pi pi-file" :closable="false" class="mt-5">File Attachment</Message>
                             <div class="card flex flex-wrap">

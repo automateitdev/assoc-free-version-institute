@@ -54,6 +54,7 @@ watch(admissionLink, (newVal) => {
     linkEnabled.value = newVal.enabled == 'YES' ?? false;
     subjectEnabled.value = newVal.subject == 'YES' ?? false;
     acinfoEnabled.value = newVal.academic_info == 'YES' ?? false;
+    formActive.value = newVal.form == 'YES' ?? false;
 });
 
 // Watch for changes in currentlyActive and update formData.enabled
