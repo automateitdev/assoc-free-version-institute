@@ -16,6 +16,7 @@ const confirm = useConfirm();
 const classList = ref();
 const centerList = ref();
 const instituteList = ref();
+
 const selectedClass = ref();
 const selectedCenter = ref();
 const selectedInstitutes = ref([]);
@@ -88,15 +89,19 @@ const subjectUpdateRequest = async () => {
 const classSetupData = reactive({
     class_id: null,
     class_name: null,
-    group_id: [],
-    group_name: []
+    center_id: null,
+    center_name: null,
+    institute_id: [],
+    institute_name: []
 });
 const classSetupRequest = async () => {
     try {
         classSetupData.class_id = selectedClass.value.subcategory_id;
         classSetupData.class_name = selectedClass.value.subcategory_name;
-        classSetupData.group_id = selectedInstitutes.value.map((elem) => elem.subcategory_id);
-        classSetupData.group_name = selectedInstitutes.value.map((elem) => elem.subcategory_name);
+        classSetupData.center_id = selectedCenter.value.subcategory_id;
+        classSetupData.center_name = selectedCenter.value.subcategory_name;
+        classSetupData.institute_id = selectedInstitutes.value.map((elem) => elem.subcategory_id);
+        classSetupData.institute_name = selectedInstitutes.value.map((elem) => elem.subcategory_name);
 
         const { status, message, error } = await saveClassSetup(classSetupData);
         if (status === 'success') {
@@ -108,7 +113,17 @@ const classSetupRequest = async () => {
         console.error(error);
         toast.add({ severity: 'error', summary: 'Error Message', detail: 'An unexpected error occured!', group: 'br', life: 5000 });
     } finally {
-        (selectedClass.value = null), (selectedInstitutes.value = []), (classSetupData.class_id = null), (classSetupData.class_name = null), (classSetupData.group_id = []), (classSetupData.group_name = []);
+        selectedClass.value = null;
+        selectedCenter.value = null;
+        selectedInstitutes.value = [];
+
+        classSetupData.class_id = null;
+        classSetupData.class_name = null;
+        classSetupData.center_id = null;
+        classSetupData.center_name = null;
+        classSetupData.institute_id = [];
+        classSetupData.institute_name = [];
+
         await fetchClassSetupIndex();
         await fetchSubjectSetupIndex();
     }
@@ -284,11 +299,12 @@ useVisibilityChange(async () => {
                             </g>
                         </svg>
                     </template>
-                    <Column field="class_name" header="class" class="capitalize"></Column>
-                    <Column field="groups" header="Groups">
+                    <Column field="class_name" header="Class" class="capitalize"></Column>
+                    <Column field="center_name" header="Center" class="capitalize"></Column>
+                    <Column field="institutes" header="Institutes">
                         <template #body="slotProps">
                             <span class="capitalize">
-                                {{ slotProps.data.groups.map((group) => group.group_name).join(', ') }}
+                                {{ slotProps.data.institutes.map((inst) => inst.institute_name).join(', ') }}
                             </span>
                         </template>
                     </Column>
