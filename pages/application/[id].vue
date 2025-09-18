@@ -45,7 +45,7 @@ const addressSameAsPresent = ref(false);
 const ins_response = ref();
 const classOpts = ref([]);
 const centerOpts = ref([]);
-const instiuteOpts = ref([]);
+const instituteOpts = ref([]);
 const genderOpts = ref(['Male', 'Female', 'Others']);
 const religionOpts = ref(['Islam', 'Hinduism', 'Christianity', 'Buddhism', 'Others']);
 const bloodOpts = ref(['A+', 'B+', 'O+', 'AB+', 'A-', 'B-', 'O-', 'AB-']);
@@ -159,9 +159,15 @@ const formData = reactive({
     guardian_yearly_income: null,
     guardian_property: null,
     academic_year: null,
-    class: null,
-    center: null,
-    group: null,
+
+    class_id: null,
+    class_name: null,
+    center_id: null,
+    center_name: null,
+    chosen_institute_id: null,
+    chosen_institute_name: null,
+
+    // group: null,
     compulsorySubjects: [],
     groupSubjects: [],
     optionalSubjects: [],
@@ -270,7 +276,7 @@ watch(
     () => formData.academic_year,
     async (newVal) => {
         if (!studentByRollFound) {
-            formData.class= null;
+            formData.class = null;
         }
         classOpts.value = admissionConfig.value.details.find((elem) => elem.academic_year == newVal);
     }
@@ -279,10 +285,18 @@ watch(
     () => formData.class,
     async (newVal) => {
         formData.center = null;
+        formData.center_id = null;
+        formData.center_name = null;
+        formData.class_id = null;
+        formData.class_name = null;
+        formData.chosen_institute_id = null;
+        formData.chosen_institute_name = null;
         if (!studentByRollFound) {
             formData.institute = null;
         }
-        instiuteOpts.value = classOpts.value.details.find((elem) => elem.class_id == newVal.class_id);
+        formData.class_id = newVal.class_id
+        formData.class_name = newVal.class_name
+        instituteOpts.value = classOpts.value.details.find((elem) => elem.class_id == newVal.class_id);
     }
 );
 
@@ -290,22 +304,26 @@ watch(
     () => formData.institute,
     (newInstitute) => {
         // Reset center if no student found
+        formData.center_id = null;
+        formData.center_name = null;
+        formData.chosen_institute_id = null;
+        formData.chosen_institute_name = null;
         if (!studentByRollFound) {
             formData.center = null;
         }
 
         // Find the detail that matches the selected class and selected institute
-        const matchedDetail = classOpts.value.details.find(
-            (detail) =>
-                detail.class_id === formData.class.class_id &&
-                detail.institutes.some(inst => inst.id === newInstitute.id)
-        );
+        const matchedDetail = classOpts.value.details.find((detail) => detail.class_id === formData.class.class_id && detail.institutes.some((inst) => inst.id === newInstitute.id));
+
+        formData.chosen_institute_id = newInstitute.id
+        formData.chosen_institute_name = newInstitute.name
 
         // Update center options
-        console.log(matchedDetail)
-        centerOpts.value = matchedDetail
-            ? [{ id: matchedDetail.center_id, name: matchedDetail.center_name }]
-            : [];
+        console.log(matchedDetail);
+        centerOpts.value = matchedDetail ? [{ id: matchedDetail.center_id, name: matchedDetail.center_name }] : [];
+
+        formData.center_id=matchedDetail.center_id
+        formData.center_name=matchedDetail.center_name
 
         // Auto-select the first center if available
         if (centerOpts.value.length) {
@@ -337,19 +355,16 @@ function isEduInformationFilled() {
         if (admissionConfig.value.academic_info_status == 'YES') {
             return Object.values(info).every((value) => value !== '');
         } else {
-            return true
+            return true;
         }
     });
 }
 
 function isSubjectFilled() {
     if (admissionConfig.value.subject_status == 'YES') {
-        return (
-            formData.subject.hasOwnProperty('compulsory') &&
-            formData.subject.compulsory.length > 0
-        );
+        return formData.subject.hasOwnProperty('compulsory') && formData.subject.compulsory.length > 0;
     } else {
-        return true
+        return true;
     }
 }
 
@@ -441,7 +456,7 @@ watch(
     async ([newinstitute, newAcademicYear, newClass, newCenter]) => {
         if (newinstitute && newAcademicYear && newClass && newCenter) {
             if (admissionConfig.value.subject_status == 'YES') {
-                await  getSubjects();
+                await getSubjects();
             }
         }
     }
@@ -516,9 +531,16 @@ const requiredFields = [
     'permanent_upozilla',
     'permanent_post_office',
     'academic_year',
-    'class',
-    'center',
-    'institute',
+
+    'class_id',
+    'class_name',
+
+    'center_id',
+    'center_name',
+
+    'chosen_institute_id',
+    'chosen_institute_name',
+    
     // 'subject',
     'student_pic'
     // 'student_birth_nid_file'
@@ -551,7 +573,6 @@ definePageMeta({
                     <div class="mx-auto my-3" v-if="admissionConfig?.form == 'YES' || studentByRollFound">
                         <Button icon="pi pi-refresh" label="Refresh" size="small" severity="secondary" @click="refresh" />
                         <div>
-
                             <Message severity="success" icon="pi pi-book" :closable="false" class="mt-5">Academic Information</Message>
                             <div class="grid">
                                 <div class="col-12 md:col-3">
@@ -591,24 +612,37 @@ definePageMeta({
 
                                 <div class="col-12 md:col-3">
                                     <label for="class">Institute <span style="color: tomato"> * </span></label>
-                                    <Dropdown filter v-model="formData.institute" :options="instiuteOpts?.institutes" optionLabel="name" placeholder="Select Institute" class="w-full capitalize" :disabled="!formData.academic_year || !formData.class || studentDataByRoll?.admission_payment?.institute">
+                                    <Dropdown
+                                        filter
+                                        v-model="formData.institute"
+                                        :options="instituteOpts?.institutes"
+                                        optionLabel="name"
+                                        placeholder="Select Institute"
+                                        class="w-full capitalize"
+                                        :disabled="!formData.academic_year || !formData.class || studentDataByRoll?.admission_payment?.institute"
+                                    >
                                         <template #option="slotProps">
                                             <div class="capitalize">{{ slotProps.option.name }}</div>
                                         </template>
                                     </Dropdown>
                                 </div>
-
 
                                 <div class="col-12 md:col-3">
                                     <label for="class">Center <span style="color: tomato"> * </span></label>
-                                    <Dropdown filter v-model="formData.center" :options="centerOpts" optionLabel="name" placeholder="Select Center" class="w-full capitalize" :disabled="!formData.academic_year || !formData.class || !formData.institute || studentDataByRoll?.admission_payment?.institute">
+                                    <Dropdown
+                                        filter
+                                        v-model="formData.center"
+                                        :options="centerOpts"
+                                        optionLabel="name"
+                                        placeholder="Select Center"
+                                        class="w-full capitalize"
+                                        :disabled="!formData.academic_year || !formData.class || !formData.institute || studentDataByRoll?.admission_payment?.institute"
+                                    >
                                         <template #option="slotProps">
                                             <div class="capitalize">{{ slotProps.option.name }}</div>
                                         </template>
                                     </Dropdown>
                                 </div>
-
-                                
 
                                 <div class="col-12" v-if="admissionConfig?.subject_status == 'YES'">
                                     <label for="className">Compulsory Subjects</label>
@@ -902,11 +936,10 @@ definePageMeta({
                                 </div>
                             </div> -->
 
-
-                            
-
-                            <Message severity="success" icon="pi pi-pencil" :closable="false" class="mt-5"  v-if="admissionConfig?.academic_info_status == 'YES'">Educational Qualifications <span style="color: tomato"> * (Atleast One Required)</span></Message>
-                            <div  v-if="admissionConfig?.academic_info_status == 'YES'" class="mb-3">
+                            <Message severity="success" icon="pi pi-pencil" :closable="false" class="mt-5" v-if="admissionConfig?.academic_info_status == 'YES'"
+                                >Educational Qualifications <span style="color: tomato"> * (Atleast One Required)</span></Message
+                            >
+                            <div v-if="admissionConfig?.academic_info_status == 'YES'" class="mb-3">
                                 <div v-for="(qualification, index) in formData.edu_information" :key="index" class="card flex flex-wrap align-items-end">
                                     <div class="col-12 md:col-4">
                                         <label for="exam">Exam</label>
@@ -953,7 +986,7 @@ definePageMeta({
                                     </div>
                                 </div>
                             </div>
-                            <Button label="Add More" @click="addQualification" icon="pi pi-plus-circle" severity="secondary" size="small" v-if="admissionConfig?.academic_info_status == 'YES'"/>
+                            <Button label="Add More" @click="addQualification" icon="pi pi-plus-circle" severity="secondary" size="small" v-if="admissionConfig?.academic_info_status == 'YES'" />
 
                             <!-- <Message severity="success" icon="pi pi-bookmark" :closable="false" class="mt-5">Quota Information</Message>
                             <div class="card flex flex-wrap gap-3">
