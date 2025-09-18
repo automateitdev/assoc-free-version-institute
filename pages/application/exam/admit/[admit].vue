@@ -16,7 +16,7 @@ onMounted(async () => {
     applicantNumber.value = route.params.admit;
     await fetchExamAdmit(route.params.admit);
     qrCodeValue.value = `${config.public.FRONTEND_URL}/application/payment/${route.params.admit}`;
-    currentLink.value = window.location.href
+    currentLink.value = window.location.href;
 });
 
 useVisibilityChange(async () => {
@@ -105,10 +105,13 @@ definePageMeta({
                     <div class="my-2 text-center">
                         <!-- <Button severity="success" :label="`${admitData?.admission_setup?.heading}`" class="font-bold border-2 mx-auto mb-2" size="small"></Button> -->
                         <Button severity="success" label="Admit Card" class="font-bold border-2 mx-auto mb-2" size="small"></Button>
-                        <h6 class="font-bold m-0 text-center capitalize"> {{ admitData?.admission_setup?.heading }}</h6>
-                        <h6 class="font-bold m-0 text-center">Exam/Lottery At: {{ formatDateUTCPlus6(admitData?.admission_payment?.exam_date_time) }}</h6>
+                        <h6 class="font-bold m-0 text-center capitalize">{{ admitData?.admission_setup?.heading }}</h6>
+                        <h6 class="font-bold m-0 text-center capitalize">Institute: {{ admitData?.student_data?.institute_name }}</h6>
                     </div>
-
+                    <div class="grid justify-content-between">
+                        <p class="p-2 m-0 text-center">Center: {{ admitData?.admission_payment?.center_name }}</p>
+                        <p class="p-2 m-0 text-center">Exam At: {{ formatDateUTCPlus6(admitData?.admission_payment?.exam_date_time) }}</p>
+                    </div>
                     <!-- <div class="col-2">
                             <qrcode-vue :value="qrCodeValue" :size="80" class="qrcode" render-as="svg" />
                         </div> -->
@@ -135,19 +138,17 @@ definePageMeta({
                             </tr>
                             <tr>
                                 <th>Class :</th>
-                                <td class="capitalize">{{ admitData?.student_data?.class }}</td>
-                                <th>Group :</th>
-                                <td class="capitalize">{{ admitData?.student_data?.group }}</td>
-                            </tr>
-                            <tr>
+                                <td class="capitalize">{{ admitData?.student_data?.class_name }}</td>
                                 <th>Roll :</th>
                                 <td>{{ admitData?.student_data?.assigned_roll ?? 'N/A' }}</td>
-                                <th>Exam/Lottery Date :</th>
-                                <td>{{ formatDateUTCPlus6(admitData?.admission_payment?.exam_date_time) }}</td>
                             </tr>
                         </tbody>
                     </table>
-                    <p><small>*This admit card was generated via: <a :href="currentLink"> {{ currentLink }}</a></small></p>
+                    <p>
+                        <small
+                            >*This admit card was generated via: <a :href="currentLink"> {{ currentLink }}</a></small
+                        >
+                    </p>
                     <!-- <table>
                         <tbody>
                             <tr>
