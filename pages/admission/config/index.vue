@@ -9,6 +9,7 @@ const admissionSetupData = ref();
 onMounted(async () => {
     await fetchClassSetupIndex();
     admissionSetupData.value = classSetupIndex.value.admissionClassSetup;
+    console.log(admissionSetupData.value);
     await addFieldsToClasses(admissionSetupData.value);
     await fetchAdmissionSetup();
     destructureStartup();
@@ -27,7 +28,7 @@ function addFieldsToClasses(data) {
             data[key] = {
                 ...data[key],
                 file: '',
-                amount: '',
+                amount: 0,
                 startDate: '',
                 endDate: '',
                 isExamRequired: false,
@@ -43,9 +44,11 @@ const selectedForAdmission = ref([]);
 
 const filters = ref({
     academic_year: { value: '', matchMode: 'contains' },
-    class: { value: '', matchMode: 'contains' },
-    shift: { value: '', matchMode: 'contains' },
-    group: { value: '', matchMode: 'contains' },
+    class_name: { value: '', matchMode: 'contains' },
+    // shift: { value: '', matchMode: 'contains' },
+    center_name: { value: '', matchMode: 'contains' },
+    // group: { value: '', matchMode: 'contains' },
+    institute_name: { value: '', matchMode: 'contains' },
     amount: { value: '', matchMode: 'contains' },
     roll_start: { value: '', matchMode: 'contains' },
     start_date_time: { value: '', matchMode: 'contains' },
@@ -64,7 +67,16 @@ const isSelected = (data) => {
 };
 
 const selectedClass = ref();
-const selectedGroups = ref();
+const selectedCenter = ref();
+const selectedInstitutes = ref();
+
+const amount = ref(0);
+const startDate = ref(null);
+const endDate = ref(null);
+const isExamRequired = ref(false);
+const examDate = ref(null);
+const rollStart = ref(null);
+
 const admissionFor = reactive({
     academic_year: null,
     section: null,
@@ -86,57 +98,60 @@ function formatDateToSQL(date) {
 async function submitAdmissionConfig() {
     try {
         const formData = new FormData();
-        formData.append('class', selectedClass.value.subcategory_name);
         formData.append('academic_year', admissionFor.academic_year);
-        const shifts = admissionFor.shift;
+        formData.append('class_id', selectedClass.value.subcategory_id);
+        formData.append('class_name', selectedClass.value.subcategory_name);
+        formData.append('center_id', selectedCenter.value.subcategory_id);
+        formData.append('center_name', selectedCenter.value.subcategory_name);
 
-        shifts.forEach((shift, index) => {
-            formData.append(`shift[${index}]`, shift);
+        selectedForAdmission.value.forEach((elem, index) => {
+            formData.append(`institutes[${index}][id]`, elem.institute_id);
+            formData.append(`institutes[${index}][name]`, elem.institute_name);
         });
 
         // For the groups
-        selectedForAdmission.value.forEach((elem, index) => {
-            formData.append(`group[${index}]`, elem.group_name);
-        });
+        // selectedForAdmission.value.forEach((elem, index) => {
+        //     formData.append(`group[${index}]`, elem.group_name);
+        // });
 
         // For the files
-        selectedForAdmission.value.forEach((elem, index) => {
-            if (elem.file) {
-                formData.append(`file[${index}]`, elem.file);
-            }
-        });
+        // selectedForAdmission.value.forEach((elem, index) => {
+        //     if (elem.file) {
+        //         formData.append(`file[${index}]`, elem.file);
+        //     }
+        // });
 
         // For the amounts
         selectedForAdmission.value.forEach((elem, index) => {
-            formData.append(`amount[${index}]`, elem.amount);
+            formData.append(`amount[${index}]`, amount.value);
         });
 
         // For the start dates
         selectedForAdmission.value.forEach((elem, index) => {
-            const startDate = elem.startDate ? formatDateToSQL(elem.startDate) : '';
-            formData.append(`start_date_time[${index}]`, startDate);
+            // const startDate = formatDateToSQL(startDate.value) : '';
+            formData.append(`start_date_time[${index}]`, formatDateToSQL(startDate.value));
         });
 
         // For the end dates
         selectedForAdmission.value.forEach((elem, index) => {
-            const endDate = elem.endDate ? formatDateToSQL(elem.endDate) : '';
-            formData.append(`end_date_time[${index}]`, endDate);
+            // const endDate = elem.endDate ? formatDateToSQL(endDate.value) : '';
+            formData.append(`end_date_time[${index}]`, formatDateToSQL(endDate.value));
         });
 
         // For the exam dates
         selectedForAdmission.value.forEach((elem, index) => {
-            const examDate = elem.examDate ? formatDateToSQL(elem.examDate) : '';
-            formData.append(`exam_date_time[${index}]`, examDate);
+            // const examDate = elem.examDate ? formatDateToSQL(examDate.value) : '';
+            formData.append(`exam_date_time[${index}]`, formatDateToSQL(examDate.value));
         });
 
         // For the exam enabled status
         selectedForAdmission.value.forEach((elem, index) => {
-            formData.append(`exam_enabled[${index}]`, elem.isExamRequired ? 'YES' : 'NO');
+            formData.append(`exam_enabled[${index}]`, isExamRequired.value ? 'YES' : 'NO');
         });
 
         // For the roll starts
         selectedForAdmission.value.forEach((elem, index) => {
-            formData.append(`roll_start[${index}]`, elem.rollStart);
+            formData.append(`roll_start[${index}]`, rollStart.value);
         });
 
         if (formData) {
@@ -148,6 +163,7 @@ async function submitAdmissionConfig() {
             }
         }
     } catch (error) {
+        console.error(error);
         toast.add({ severity: 'error', summary: 'Error Message', detail: 'An unexpected error occured!', group: 'br', life: 5000 });
     } finally {
         await fetchClassSetupIndex();
@@ -156,28 +172,42 @@ async function submitAdmissionConfig() {
     }
 }
 
-const admissionClasses = ref();
 const admissionAcademicYears = ref();
-const admissionShift = ref();
+const admissionClasses = ref();
+const admissionCenters = ref();
+const admissionInstitutes = ref();
 
 function destructureStartup() {
-    admissionClasses.value = classSetupIndex.value.admission_startup.filter((item) => item.category_name === 'Class').flatMap((item) => item.subcategories);
-
     admissionAcademicYears.value = classSetupIndex.value.admission_startup.filter((item) => item.category_name === 'Academic Year').flatMap((item) => item.subcategories);
-
-    admissionShift.value = classSetupIndex.value.admission_startup.filter((item) => item.category_name === 'Shift').flatMap((item) => item.subcategories);
+    admissionClasses.value = classSetupIndex.value.admission_startup.filter((item) => item.category_name === 'Class').flatMap((item) => item.subcategories);
+    admissionCenters.value = classSetupIndex.value.admission_startup.filter((item) => item.category_name === 'Center').flatMap((item) => item.subcategories);
+    admissionInstitutes.value = classSetupIndex.value.admission_startup.filter((item) => item.category_name === 'Institute').flatMap((item) => item.subcategories);
 }
 
 async function getClassData() {
     try {
         selectedForAdmission.value = [];
-        selectedGroups.value = classSetupIndex.value.admissionClassSetup.find((elem) => elem.class_id == selectedClass.value.subcategory_id).groups;
-        addFieldsToClasses(selectedGroups.value);
+        selectedInstitutes.value = classSetupIndex.value.admissionClassSetup.find((elem) => elem.class_id == selectedClass.value.subcategory_id && elem.center_id == selectedCenter.value.subcategory_id)?.institutes || [];
+
+        addFieldsToClasses(selectedInstitutes.value);
     } catch (error) {
-        // console.log(error);
+        console.log(error);
         toast.add({ severity: 'error', summary: 'Error Message', detail: 'An unexpected error occured!', group: 'br', life: 5000 });
     }
 }
+
+watch(
+    () => [selectedClass?.value?.subcategory_id, selectedCenter?.value?.subcategory_id],
+    async ([classId, centerId]) => {
+        if (classId && centerId) {
+            await getClassData();
+        } else {
+            selectedForAdmission.value = [];
+            selectedInstitutes.value = [];
+        }
+    }
+);
+
 const editVisible = ref(false);
 let selectedToEdit = ref(null);
 const isExamRequiredOnEdit = ref(false);
@@ -209,6 +239,7 @@ async function submitEditedConfig() {
             }
         }
     } catch (error) {
+        console.error(error);
         toast.add({ severity: 'error', summary: 'Error Message', detail: 'An unexpected error occured!', group: 'br', life: 5000 });
     } finally {
         await fetchClassSetupIndex();
@@ -336,16 +367,7 @@ const onRowUnselect = () => {
     <div class="card">
         <TabView>
             <TabPanel header="Admission Config">
-                <div class="m-2">
-                    <Dropdown v-model="selectedClass" :options="admissionClasses" optionLabel="subcategory_name" placeholder="Select a class" @change="getClassData" class="capitalize">
-                        <template #option="slotProps">
-                            <div class="capitalize">
-                                {{ slotProps.option.subcategory_name }}
-                            </div>
-                        </template>
-                    </Dropdown>
-                </div>
-                <div class="grid gap-2 m-2">
+                <div class="flex flex-wrap mb-2 gap-2">
                     <Dropdown class="capitalize" v-model="admissionFor.academic_year" :options="admissionAcademicYears" optionLabel="subcategory_name" optionValue="subcategory_name" placeholder="Academic Year">
                         <template #option="slotProps">
                             <div class="flex align-items-center capitalize">
@@ -354,21 +376,78 @@ const onRowUnselect = () => {
                         </template>
                     </Dropdown>
 
-                    <MultiSelect v-model="admissionFor.shift" display="chip" :options="admissionShift" optionLabel="subcategory_name" placeholder="Select Shifts" optionValue="subcategory_name" class="capitalize">
+                    <Dropdown v-model="selectedClass" :options="admissionClasses" optionLabel="subcategory_name" placeholder="Select a class" class="capitalize" :disabled="!admissionFor.academic_year">
+                        <template #option="slotProps">
+                            <div class="capitalize">
+                                {{ slotProps.option.subcategory_name }}
+                            </div>
+                        </template>
+                    </Dropdown>
+
+                    <Dropdown v-model="selectedCenter" :options="admissionCenters" optionLabel="subcategory_name" placeholder="select a center" class="capitalize" :disabled="!admissionFor.academic_year || !selectedClass">
+                        <template #option="slotProps">
+                            <div class="capitalize">
+                                {{ slotProps.option.subcategory_name }}
+                            </div>
+                        </template>
+                    </Dropdown>
+
+                    <!-- <MultiSelect v-model="admissionFor.shift" display="chip" :options="admissionShift" optionLabel="subcategory_name" placeholder="Select Shifts" optionValue="subcategory_name" class="capitalize">
                         <template #option="slotProps">
                             <div class="flex align-items-center capitalize">
                                 <div>{{ slotProps.option.subcategory_name }}</div>
                             </div>
                         </template>
-                    </MultiSelect>
+                    </MultiSelect> -->
 
-                    <Button label="Save" size="small" icon="pi pi-save" :loading="loading" :disabled="!selectedForAdmission.length || !admissionFor.academic_year || !admissionFor.shift" @click="submitAdmissionConfig" />
+                    <!-- <MultiSelect v-model="admissionFor.institutes" display="chip" :options="admissionInstitutes" optionLabel="subcategory_name" placeholder="select institutes" optionValue="subcategory_name" class="capitalize">
+                        <template #option="slotProps">
+                            <div class="flex align-items-center capitalize">
+                                <div>{{ slotProps.option.subcategory_name }}</div>
+                            </div>
+                        </template>
+                    </MultiSelect> -->
                 </div>
 
-                <DataTable showGridlines stripedRows v-model:selection="selectedForAdmission" dataKey="group_id" class="p-datatable-sm" v-model:filters="filters" :value="selectedGroups" paginator :rows="10" filterDisplay="row" :loading="loading">
-                    <template #header>
+                <Fieldset legend="Configuration">
+                    <div v-if="!selectedForAdmission.length">
+                        <Message severity="warn" :closable="false">Please select institutes to configure</Message>
+                    </div>
+
+                    <div v-else>
+                        <div class="flex flex-wrap gap-2">
+                            <InputNumber min="1" v-model="amount" placeholder="Admission Fee" :disabled="!selectedForAdmission.length" />
+                            <InputText v-model="rollStart" placeholder="Starting Roll Number" :disabled="!selectedForAdmission.length" />
+                            <Calendar v-model="startDate" showTime hourFormat="12" placeholder="Start Date" :disabled="!selectedForAdmission.length" />
+                            <Calendar v-model="endDate" showTime hourFormat="12" placeholder="End Date" :disabled="!selectedForAdmission.length || !startDate" :minDate="startDate" />
+                        </div>
+                        <hr />
+                        <div class="flex flex-wrap gap-2 align-items-center">
+                            <label for="" class="w-full">Exam Required</label>
+                            <InputSwitch v-model="isExamRequired" class="p-button-sm" :disabled="!selectedForAdmission.length" />
+                            <Calendar v-model="examDate" showTime hourFormat="12" placeholder="Exam Datetime" v-if="isExamRequired" :disabled="!selectedForAdmission.length || !endDate" :minDate="endDate" />
+
+                            <Button label="Save" size="small" icon="pi pi-save" :loading="loading" :disabled="!selectedForAdmission.length || !admissionFor.academic_year" @click="submitAdmissionConfig" />
+                        </div>
+                    </div>
+                </Fieldset>
+
+                <DataTable
+                    showGridlines
+                    stripedRows
+                    v-model:selection="selectedForAdmission"
+                    dataKey="institute_id"
+                    class="p-datatable-sm"
+                    v-model:filters="filters"
+                    :value="selectedInstitutes"
+                    paginator
+                    :rows="10"
+                    filterDisplay="row"
+                    :loading="loading"
+                >
+                    <!-- <template #header>
                         <Button label="Template File" icon="pi pi-file-excel" severity="help" size="small" @click="demoExcelDownload" />
-                    </template>
+                    </template> -->
                     <template #empty> No results found. </template>
                     <template #loading>
                         <svg xmlns="http://www.w3.org/2000/svg" width="3em" height="3em" viewBox="0 0 24 24">
@@ -385,66 +464,66 @@ const onRowUnselect = () => {
                     </template>
                     <Column selectionMode="multiple" headerStyle="width: 3rem"></Column>
 
-                    <Column field="group_name" header="Group" style="min-width: 12rem">
+                    <Column field="institute_name" header="Institute" style="min-width: 12rem">
                         <template #body="{ data }">
                             <div class="capitalize">
-                                {{ data.group_name }}
+                                {{ data.institute_name }}
                             </div>
                         </template>
                     </Column>
 
-                    <Column field="file" header="Attach File" style="min-width: 12rem">
+                    <!-- <Column field="file" header="Attach File" style="min-width: 12rem">
                         <template #body="{ data }">
                             <FileUpload mode="basic" v-model="data.file" accept=".xlsx" :maxFileSize="1000000" class="p-button-sm" @select="onFileSelect($event, data)" :disabled="!isSelected(data)" @click="data.file = null" />
                         </template>
-                    </Column>
+                    </Column> -->
 
-                    <Column field="amount" header="Amount" style="min-width: 12rem">
+                    <!-- <Column field="amount" header="Amount" style="min-width: 12rem">
                         <template #body="{ data }">
                             <InputNumber min="1" v-model="data.amount" placeholder="Admission Fee" :disabled="!isSelected(data)" />
                         </template>
-                    </Column>
+                    </Column> -->
 
-                    <Column field="startDate" header="Start Datetime" style="min-width: 12rem">
+                    <!-- <Column field="startDate" header="Start Datetime" style="min-width: 12rem">
                         <template #body="{ data }">
                             <Calendar :id="'start-date-' + data.class_id" v-model="data.startDate" showTime hourFormat="12" placeholder="Start Date" :disabled="!isSelected(data)" />
                         </template>
-                    </Column>
+                    </Column> -->
 
-                    <Column field="endDate" header="End Datetime" style="min-width: 12rem">
+                    <!-- <Column field="endDate" header="End Datetime" style="min-width: 12rem">
                         <template #body="{ data }">
                             <Calendar v-model="data.endDate" showTime hourFormat="12" placeholder="End Date" :disabled="!isSelected(data)" />
                         </template>
-                    </Column>
+                    </Column> -->
 
-                    <Column field="rollStart" header="Roll Start" style="min-width: 12rem">
+                    <!-- <Column field="rollStart" header="Roll Start" style="min-width: 12rem">
                         <template #body="{ data }">
                             <InputText v-model="data.rollStart" placeholder="Starting Roll Number" :disabled="!isSelected(data)" />
                         </template>
-                    </Column>
+                    </Column> -->
 
-                    <Column field="isExamRequired" header="Exam">
+                    <!-- <Column field="isExamRequired" header="Exam">
                         <template #body="{ data }">
                             <InputSwitch v-model="data.isExamRequired" class="p-button-sm" :disabled="!isSelected(data)" />
                         </template>
-                    </Column>
+                    </Column> -->
 
-                    <Column field="examTime" header="Exam/Lottery Datetime" style="min-width: 12rem">
+                    <!-- <Column field="examTime" header="Exam Datetime" style="min-width: 12rem">
                         <template #body="{ data }">
                             <Calendar v-model="data.examDate" showTime hourFormat="12" placeholder="Exam Datetime" v-if="data.isExamRequired" :disabled="!isSelected(data)" />
                         </template>
-                    </Column>
+                    </Column> -->
                 </DataTable>
             </TabPanel>
             <TabPanel header="Configured">
                 <DataTable
+                    size="small"
                     v-model:filters="filters"
                     :value="existingConfigs"
                     paginator
                     :rows="5"
                     :rowsPerPageOptions="[5, 25, 50, 100]"
                     tableStyle="min-width: 75rem"
-                    class="p-datatable-sm"
                     showGridlines
                     stripedRows
                     scrollable
@@ -483,18 +562,31 @@ const onRowUnselect = () => {
                         </template>
                     </Column>
 
-                    <Column style="min-width: 200px" class="capitalize" field="class" header="Class">
+                    <Column style="min-width: 200px" class="capitalize" field="class_name" header="Class">
                         <template #filter="{ filterModel, filterCallback }">
                             <InputText v-model="filterModel.value" type="text" @input="filterCallback()" class="p-column-filter" placeholder="Search by name" />
                         </template>
                     </Column>
 
-                    <Column style="min-width: 200px" class="capitalize" field="shift" header="Shift">
+                    <!-- <Column style="min-width: 200px" class="capitalize" field="shift" header="Shift">
+                        <template #filter="{ filterModel, filterCallback }">
+                            <InputText v-model="filterModel.value" type="text" @input="filterCallback()" class="p-column-filter" placeholder="Search by name" />
+                        </template>
+                    </Column> -->
+
+                    <Column style="min-width: 200px" class="capitalize" field="center_name" header="Center">
                         <template #filter="{ filterModel, filterCallback }">
                             <InputText v-model="filterModel.value" type="text" @input="filterCallback()" class="p-column-filter" placeholder="Search by name" />
                         </template>
                     </Column>
-                    <Column style="min-width: 200px" class="capitalize" field="group" header="Group">
+
+                    <!-- <Column style="min-width: 200px" class="capitalize" field="group" header="Group">
+                        <template #filter="{ filterModel, filterCallback }">
+                            <InputText v-model="filterModel.value" type="text" @input="filterCallback()" class="p-column-filter" placeholder="Search by name" />
+                        </template>
+                    </Column> -->
+
+                    <Column style="min-width: 200px" class="capitalize" field="institute_name" header="Institute">
                         <template #filter="{ filterModel, filterCallback }">
                             <InputText v-model="filterModel.value" type="text" @input="filterCallback()" class="p-column-filter" placeholder="Search by name" />
                         </template>
@@ -507,14 +599,14 @@ const onRowUnselect = () => {
                         <template #body="{ data }">{{ data.amount ?? 'N/A' }}</template>
                     </Column>
 
-                    <Column style="min-width: 200px" class="capitalize" field="start_date_time" header="Start Date Time">
+                    <Column style="min-width: 230px" class="capitalize" field="start_date_time" header="Start Date Time">
                         <template #filter="{ filterModel, filterCallback }">
                             <InputText v-model="filterModel.value" type="text" @input="filterCallback()" class="p-column-filter" placeholder="Search by name" />
                         </template>
                         <template #body="{ data }">{{ data.start_date_time ? formatDateTimeTo12Hour(data.start_date_time) : 'N/A' }}</template>
                     </Column>
 
-                    <Column style="min-width: 200px" class="capitalize" field="end_date_time" header="End Date Time">
+                    <Column style="min-width: 230px" class="capitalize" field="end_date_time" header="End Date Time">
                         <template #filter="{ filterModel, filterCallback }">
                             <InputText v-model="filterModel.value" type="text" @input="filterCallback()" class="p-column-filter" placeholder="Search by name" />
                         </template>
@@ -544,7 +636,7 @@ const onRowUnselect = () => {
                 </DataTable>
             </TabPanel>
 
-            <TabPanel header="Enlistment">
+            <!-- <TabPanel header="Enlistment">
                 <div class="grid gap-2 m-2">
                     <Dropdown v-model="enlistmentFor.class" :options="admissionClasses" optionLabel="subcategory_name" optionValue="subcategory_name" placeholder="Select a class" class="capitalize">
                         <template #option="slotProps">
@@ -660,11 +752,18 @@ const onRowUnselect = () => {
                         </template>
                     </Column>
                 </DataTable>
-            </TabPanel>
+            </TabPanel> -->
         </TabView>
 
         <Dialog v-model:visible="editVisible" modal header="Edit Configuration" :style="{ width: '30rem', maxWidth: '30rem' }">
-            <span class="text-primary block mb-3 capitalize">Updating For: {{ selectedToEdit.class }}-{{ selectedToEdit.group }}-{{ selectedToEdit.shift }} ({{ selectedToEdit.academic_year }})</span>
+            <div class="mb-3">
+                <span class="text-primary block capitalize">Updating For: ({{ selectedToEdit.academic_year }})</span>
+                <p class="p-0 m-0">Class:: {{ selectedToEdit.class_name }}</p>
+                <p class="p-0 m-0">Center:: {{ selectedToEdit.center_name }}</p>
+                <p class="p-0 m-0">Institute:: {{ selectedToEdit.institute_name }}</p>
+            </div>
+
+            
             <div class="mb-3">
                 <label class="w-full" for="amountEdit">Amount</label>
                 <InputText v-model="selectedToEdit.amount" id="amountEdit" class="w-full" autocomplete="off" />

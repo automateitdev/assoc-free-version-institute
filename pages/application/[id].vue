@@ -44,7 +44,8 @@ const { fetchadmissionConfig, fetchStudentDataByRoll, fetchDivisions, fetchDistr
 const addressSameAsPresent = ref(false);
 const ins_response = ref();
 const classOpts = ref([]);
-const CenterInstiuteOpts = ref([]);
+const centerOpts = ref([]);
+const instiuteOpts = ref([]);
 const genderOpts = ref(['Male', 'Female', 'Others']);
 const religionOpts = ref(['Islam', 'Hinduism', 'Christianity', 'Buddhism', 'Others']);
 const bloodOpts = ref(['A+', 'B+', 'O+', 'AB+', 'A-', 'B-', 'O-', 'AB-']);
@@ -269,7 +270,7 @@ watch(
     () => formData.academic_year,
     async (newVal) => {
         if (!studentByRollFound) {
-            formData.class = null;
+            formData.class= null;
         }
         classOpts.value = admissionConfig.value.details.find((elem) => elem.academic_year == newVal);
     }
@@ -277,11 +278,39 @@ watch(
 watch(
     () => formData.class,
     async (newVal) => {
+        formData.center = null;
         if (!studentByRollFound) {
-            formData.center = null;
             formData.institute = null;
         }
-        CenterInstiuteOpts.value = classOpts.value.details.find((elem) => elem.class == newVal);
+        instiuteOpts.value = classOpts.value.details.find((elem) => elem.class_id == newVal.class_id);
+    }
+);
+
+watch(
+    () => formData.institute,
+    (newInstitute) => {
+        // Reset center if no student found
+        if (!studentByRollFound) {
+            formData.center = null;
+        }
+
+        // Find the detail that matches the selected class and selected institute
+        const matchedDetail = classOpts.value.details.find(
+            (detail) =>
+                detail.class_id === formData.class.class_id &&
+                detail.institutes.some(inst => inst.id === newInstitute.id)
+        );
+
+        // Update center options
+        console.log(matchedDetail)
+        centerOpts.value = matchedDetail
+            ? [{ id: matchedDetail.center_id, name: matchedDetail.center_name }]
+            : [];
+
+        // Auto-select the first center if available
+        if (centerOpts.value.length) {
+            formData.center = centerOpts.value[0];
+        }
     }
 );
 
@@ -509,7 +538,6 @@ definePageMeta({
 
 <template>
     <Toast />
-
     <section class="mx-auto" style="max-width: 1378px" v-if="!ins_response">
         <div class="card my-3 text-center">
             <img :src="`${config.public.BASE_URL}/storage/${admissionConfig?.instiute_details?.logo}`" alt="logo" class="mx-auto" style="width: 100px" />
@@ -527,7 +555,7 @@ definePageMeta({
                             <Message severity="success" icon="pi pi-book" :closable="false" class="mt-5">Academic Information</Message>
                             <div class="grid">
                                 <div class="col-12 md:col-3">
-                                    <label for="year-session">Year / Session <span style="color: tomato"> * </span></label>
+                                    <label for="year-session">Academic Year<span style="color: tomato"> * </span></label>
                                     <Dropdown
                                         filter
                                         id="permanentPS"
@@ -549,36 +577,38 @@ definePageMeta({
                                     <Dropdown
                                         filter
                                         v-model="formData.class"
-                                        :options="classOpts.details"
-                                        optionLabel="class"
-                                        optionValue="class"
+                                        :options="classOpts?.details"
+                                        optionLabel="class_name"
                                         placeholder="Select Class"
                                         class="w-full capitalize"
                                         :disabled="!formData.academic_year || studentDataByRoll?.admission_payment?.class"
                                     >
                                         <template #option="slotProps">
-                                            <div class="capitalize">{{ slotProps.option.class }}</div>
-                                        </template>
-                                    </Dropdown>
-                                </div>
-
-                                <div class="col-12 md:col-3">
-                                    <label for="class">Center <span style="color: tomato"> * </span></label>
-                                    <Dropdown filter v-model="formData.center" :options="CenterInstiuteOpts?.centers" placeholder="Select Center" class="w-full capitalize" :disabled="!formData.class || studentDataByRoll?.admission_payment?.institute">
-                                        <template #option="slotProps">
-                                            <div class="capitalize">{{ slotProps.option }}</div>
+                                            <div class="capitalize">{{ slotProps.option.class_name }}</div>
                                         </template>
                                     </Dropdown>
                                 </div>
 
                                 <div class="col-12 md:col-3">
                                     <label for="class">Institute <span style="color: tomato"> * </span></label>
-                                    <Dropdown filter v-model="formData.institute" :options="CenterInstiuteOpts?.institutes" placeholder="Select Group" class="w-full capitalize" :disabled="!formData.center || studentDataByRoll?.admission_payment?.institute">
+                                    <Dropdown filter v-model="formData.institute" :options="instiuteOpts?.institutes" optionLabel="name" placeholder="Select Institute" class="w-full capitalize" :disabled="!formData.academic_year || !formData.class || studentDataByRoll?.admission_payment?.institute">
                                         <template #option="slotProps">
-                                            <div class="capitalize">{{ slotProps.option }}</div>
+                                            <div class="capitalize">{{ slotProps.option.name }}</div>
                                         </template>
                                     </Dropdown>
                                 </div>
+
+
+                                <div class="col-12 md:col-3">
+                                    <label for="class">Center <span style="color: tomato"> * </span></label>
+                                    <Dropdown filter v-model="formData.center" :options="centerOpts" optionLabel="name" placeholder="Select Center" class="w-full capitalize" :disabled="!formData.academic_year || !formData.class || !formData.institute || studentDataByRoll?.admission_payment?.institute">
+                                        <template #option="slotProps">
+                                            <div class="capitalize">{{ slotProps.option.name }}</div>
+                                        </template>
+                                    </Dropdown>
+                                </div>
+
+                                
 
                                 <div class="col-12" v-if="admissionConfig?.subject_status == 'YES'">
                                     <label for="className">Compulsory Subjects</label>
