@@ -16,61 +16,61 @@ const loading = ref(false);
 
 // Unified logic to load invoice
 const loadInvoice = async () => {
-  const slip = route.params.slip;
-  if (!slip) return;
+    const slip = route.params.slip;
+    if (!slip) return;
 
-  loading.value = true;
-  applicantNumber.value = slip;
+    loading.value = true;
+    applicantNumber.value = slip;
 
-  try {
-    await fetchPaymentInvoice(slip);
-    qrCodeValue.value = `${config.public.FRONTEND_URL}/application/payment/${slip}`;
-  } catch (error) {
-    console.error('Failed to fetch invoice:', error);
-  } finally {
-    loading.value = false;
-  }
+    try {
+        await fetchPaymentInvoice(slip);
+        qrCodeValue.value = `${config.public.FRONTEND_URL}/application/payment/${slip}`;
+    } catch (error) {
+        console.error('Failed to fetch invoice:', error);
+    } finally {
+        loading.value = false;
+    }
 };
 
 // Watch for changes in route param
 watch(
-  () => route.params.slip,
-  async (slip) => {
-    if (slip) await loadInvoice();
-  },
-  { immediate: true }
+    () => route.params.slip,
+    async (slip) => {
+        if (slip) await loadInvoice();
+    },
+    { immediate: true }
 );
 
 // Also reload invoice when visibility changes (e.g. tab switch)
 useVisibilityChange(() => {
-  loadInvoice();
+    loadInvoice();
 });
 
 const printInvoice = () => {
-  const printContents = document.getElementById('paymentSlip').innerHTML;
-  const originalContents = document.body.innerHTML;
-  document.body.innerHTML = printContents;
-  window.print();
-  document.body.innerHTML = originalContents; // Restore original content
+    const printContents = document.getElementById('paymentSlip').innerHTML;
+    const originalContents = document.body.innerHTML;
+    document.body.innerHTML = printContents;
+    window.print();
+    document.body.innerHTML = originalContents; // Restore original content
 };
 
 function formatDate(timestamp) {
-  const date = new Date(timestamp);
-  const day = date.getUTCDate().toString().padStart(2, '0');
-  const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-  const month = monthNames[date.getUTCMonth()];
-  const year = date.getUTCFullYear();
-  return `${day}, ${month} ${year}`;
+    const date = new Date(timestamp);
+    const day = date.getUTCDate().toString().padStart(2, '0');
+    const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+    const month = monthNames[date.getUTCMonth()];
+    const year = date.getUTCFullYear();
+    return `${day}, ${month} ${year}`;
 }
 
 definePageMeta({
-  layout: false
+    layout: false
 });
 </script>
 
 <template>
     <Toast />
-    <div class="mx-auto" style="min-width: 900px; max-width: 1200px" :loading="loading">
+    <div class="mx-auto" style="min-width: 600px; max-width: 900px" :loading="loading">
         <div class="card my-2" v-if="invoiceData">
             <h3 class="font-bold text-center text-primary">Payment Slip</h3>
             <div class="grid gap-2 justify-content-center align-items-center">
@@ -94,6 +94,7 @@ definePageMeta({
                             <div class="my-2">
                                 <Button :label="`INVOICE : ${invoiceData?.student_data?.unique_number}`" severity="secondary" outlined></Button>
                             </div>
+                            <p class="font-bold">PAID AT: {{ formatDate(invoiceData?.student_data?.date) }}</p>
                         </div>
                         <div class="col-2">
                             <qrcode-vue :value="qrCodeValue" :size="80" class="qrcode" render-as="svg" />
@@ -102,6 +103,8 @@ definePageMeta({
                     <table style="border: none">
                         <tbody style="border: none">
                             <tr style="border: none">
+                                <th style="border: none">Assigned Roll :</th>
+                                <td style="border: none">{{ invoiceData?.student_data?.assigned_roll ?? 'N/A' }}</td>
                                 <th style="border: none">Applicant ID :</th>
                                 <td style="border: none">{{ invoiceData?.student_data?.unique_number }}</td>
                                 <th style="border: none">Academic Year :</th>
@@ -110,14 +113,15 @@ definePageMeta({
                             <tr style="border: none">
                                 <th style="border: none">Student Name :</th>
                                 <td style="border: none">{{ invoiceData?.student_data?.student_name_english }}</td>
-                                <th style="border: none">Assigned Roll :</th>
-                                <td style="border: none">{{ invoiceData?.student_data?.assigned_roll ?? 'N/A' }}</td>
+                                <th style="border: none">Class :</th>
+                                <td style="border: none" class="capitalize">{{ invoiceData?.student_data?.class_name }}</td>
                             </tr>
                             <tr style="border: none">
-                                <th style="border: none">Class-Group :</th>
-                                <td style="border: none" class="capitalize">{{ invoiceData?.student_data?.class }}-{{ invoiceData?.student_data?.group }}</td>
-                                <th style="border: none">Payment Date :</th>
-                                <td style="border: none">{{ formatDate(invoiceData?.student_data?.date) }}</td>
+                                <th style="border: none">Institute:</th>
+                                <td style="border: none">{{ invoiceData?.student_data?.institute_name }}</td>
+
+                                <th style="border: none">Center :</th>
+                                <td style="border: none" class="capitalize">{{ invoiceData?.student_data?.center_name }}</td>
                             </tr>
                         </tbody>
                     </table>

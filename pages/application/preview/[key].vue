@@ -158,7 +158,7 @@ watch(
     async (newVal) => {
         if (newVal) {
             dateOfBirth.value = previewData.value?.student_data?.date_of_birth;
-            formData.student_name_bangla = formData.student_name_bangla ?? previewData.value?.student_data?.student_name_bangla;
+            // formData.student_name_bangla = formData.student_name_bangla ?? previewData.value?.student_data?.student_name_bangla;
             formData.student_name_english = formData.student_name_english ?? previewData.value?.student_data?.student_name_english;
             formData.student_mobile = formData.student_mobile ?? previewData.value?.student_data?.student_mobile;
             formData.nationality = formData.nationality ?? previewData.value?.student_data?.nationality;
@@ -167,7 +167,7 @@ watch(
             formData.gender = formData.gender ?? previewData.value?.student_data?.gender;
             formData.religion = formData.religion ?? previewData.value?.student_data?.religion;
             formData.blood_group = formData.blood_group ?? previewData.value?.student_data?.blood_group;
-            formData.merital_status = formData.merital_status ?? previewData.value?.student_data?.merital_status;
+            // formData.merital_status = formData.merital_status ?? previewData.value?.student_data?.merital_status;
         }
     }
 );
@@ -671,7 +671,7 @@ const isPaymentDeadlinePassed = computed(() => {
                         <Button label="Edit" @click="isEditing = true" severity="info" icon="pi pi-file-edit" size="small" :loading="loading" />
                         <Button label="Payment" @click="payNow" :loading="loading" severity="success" icon="pi pi-money-bill" size="small" v-if="previewData?.student_data?.approval_status != 'Success' && !isPaymentDeadlinePassed" />
                     </div>
-                    <div v-if="previewData?.exam">
+                    <div v-if="previewData?.exam && previewData?.student_data?.approval_status == 'Success'">
                         <a :href="`/application/exam/admit/${previewData?.student_data?.unique_number}`">
                             <Button severity="success" label="Admit Card" :loading="loading" icon="pi pi-eye" />
                         </a>
@@ -696,10 +696,10 @@ const isPaymentDeadlinePassed = computed(() => {
                             <label for="ingredient1" class="ml-2 font-bold"> Student Information</label>
                         </div>
                         <div class="grid" v-if="student_edit">
-                            <div class="col-12 md:col-6">
+                            <!-- <div class="col-12 md:col-6">
                                 <label for="student-name-bangla">Student Name (Bangla) <span style="color: tomato"> * </span></label>
                                 <InputText id="student-name-bangla" v-model="formData.student_name_bangla" class="w-full" placeholder="Student Name (Bangla)" />
-                            </div>
+                            </div> -->
                             <div class="col-12 md:col-6">
                                 <label for="student-name-english">Student Name (English) <span style="color: tomato"> * </span></label>
                                 <InputText id="student-name-english" v-model="formData.student_name_english" class="w-full" placeholder="Student Name (English)" />
@@ -739,10 +739,10 @@ const isPaymentDeadlinePassed = computed(() => {
                                 <Dropdown id="stdBlood" :options="bloodOpts" v-model="formData.blood_group" placeholder="Select Blood Group" class="w-full" />
                             </div>
 
-                            <div class="col-12 md:col-6">
+                            <!-- <div class="col-12 md:col-6">
                                 <label for="stdMarriage">Marital Status <span style="color: tomato"> * </span></label>
                                 <Dropdown id="stdMarriage" :options="maritalOpts" v-model="formData.merital_status" placeholder="Select Marital Status" class="w-full" />
-                            </div>
+                            </div> -->
                         </div>
 
                         <div class="flex align-items-center">
@@ -928,7 +928,7 @@ const isPaymentDeadlinePassed = computed(() => {
                             </div>
                         </div>
 
-                        <div class="flex align-items-center">
+                        <!-- <div class="flex align-items-center">
                             <Checkbox v-model="guardian_edit" inputId="ingredient4" :binary="true" />
                             <label for="ingredient4" class="ml-2 font-bold"> Guardian Information </label>
                         </div>
@@ -959,7 +959,7 @@ const isPaymentDeadlinePassed = computed(() => {
                                 <label for="guardian-property">Property</label>
                                 <InputText id="guardian-property" v-model="formData.guardian_property" class="w-full" placeholder="Guardian Property" />
                             </div>
-                        </div>
+                        </div> -->
 
                         <div class="flex align-items-center" v-if="admissionConfig?.subject_status == 'YES'">
                             <Checkbox v-model="academic_edit" inputId="ingredient6" :binary="true" />
@@ -1110,7 +1110,7 @@ const isPaymentDeadlinePassed = computed(() => {
                             <Button label="Add More" @click="addQualification" icon="pi pi-plus-circle" severity="secondary" size="small" />
                         </div>
 
-                        <div class="flex align-items-center">
+                        <!-- <div class="flex align-items-center">
                             <Checkbox v-model="covid_edit" inputId="ingredient5" :binary="true" />
                             <label for="ingredient5" class="ml-2 font-bold"> COVID-19 Vaccine Information </label>
                         </div>
@@ -1139,9 +1139,9 @@ const isPaymentDeadlinePassed = computed(() => {
                                     <Button label="Previously Uploaded" severity="secondary" v-if="previewData?.student_data?.vaccine_certificate" icon="pi pi-check-circle" size="small" text disabled />
                                 </div>
                             </div>
-                        </div>
+                        </div> -->
 
-                        <div class="flex align-items-center">
+                        <!-- <div class="flex align-items-center">
                             <Checkbox v-model="quota_edit" inputId="ingredient8" :binary="true" />
                             <label for="ingredient8" class="ml-2 font-bold"> Quota Information </label>
                         </div>
@@ -1161,7 +1161,7 @@ const isPaymentDeadlinePassed = computed(() => {
                                     <InputText v-model="formData.quota" placeholder="Name the quota" class="w-full mx-2" v-if="otherQuota" />
                                 </div>
                             </div>
-                        </div>
+                        </div> -->
 
                         <div class="flex align-items-center">
                             <Checkbox v-model="attachment_edit" inputId="ingredient9" :binary="true" />
@@ -1278,6 +1278,41 @@ const isPaymentDeadlinePassed = computed(() => {
                         </tr>
                     </tbody>
                 </table>
+
+                                <table>
+                    <caption class="text-left font-bold">
+                        Academic Information
+                    </caption>
+                    <tbody>
+                        <tr>
+                            <td>Year/session</td>
+                            <td>{{ previewData?.student_data?.academic_year }}</td>
+                            
+                            <td>Class</td>
+                            <td>{{ previewData?.student_data?.class_name }}</td>
+
+                            <td>Institute</td>
+                            <td>{{ previewData?.student_data?.institute_name }}</td>
+                            
+                            <td>Center</td>
+                            <td>{{ previewData?.student_data?.center_name }}</td>
+                        </tr>
+                        <tr v-if="admissionConfig?.subject_status == 'YES'">
+                            <td>Subjects</td>
+                            <td colspan="7">
+                                Compulsory: (
+                                <span v-for="subject in parsedSubjects.compulsory" :key="subject"> {{ subject }}, </span>
+                                ) Group: (
+                                <span v-for="subject in parsedSubjects.group" :key="subject">{{ subject }}, </span>
+                                ) Optional: (
+                                <span v-for="subject in parsedSubjects.optional" :key="subject">{{ subject }}, </span>
+                                )
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+
+
                 <table>
                     <caption class="text-left font-bold">
                         Student Information
@@ -1292,8 +1327,8 @@ const isPaymentDeadlinePassed = computed(() => {
                             <td>{{ previewData?.student_data?.student_mobile }}</td>
                         </tr>
                         <tr>
-                            <td>Name (Bangla)</td>
-                            <td>{{ previewData?.student_data?.student_name_bangla }}</td>
+                            <!-- <td>Name (Bangla)</td>
+                            <td>{{ previewData?.student_data?.student_name_bangla }}</td> -->
                             <td>Name (English)</td>
                             <td>{{ previewData?.student_data?.student_name_english }}</td>
                             <td>Nationality</td>
@@ -1311,8 +1346,8 @@ const isPaymentDeadlinePassed = computed(() => {
                         <tr>
                             <td>Gender</td>
                             <td>{{ previewData?.student_data?.gender }}</td>
-                            <td>Marital Status</td>
-                            <td>{{ previewData?.student_data?.merital_status }}</td>
+                            <!-- <td>Marital Status</td>
+                            <td>{{ previewData?.student_data?.merital_status }}</td> -->
                             <td>Religion</td>
                             <td>{{ previewData?.student_data?.religion }}</td>
                         </tr>
@@ -1415,36 +1450,7 @@ const isPaymentDeadlinePassed = computed(() => {
                     </tbody>
                 </table>
 
-                <table>
-                    <caption class="text-left font-bold">
-                        Academic Information
-                    </caption>
-                    <tbody>
-                        <tr>
-                            <td>Year/session</td>
-                            <td>{{ previewData?.student_data?.academic_year }}</td>
-                            <td>Class</td>
-                            <td>{{ previewData?.student_data?.class }}</td>
 
-                            <td>Group</td>
-                            <td>{{ previewData?.student_data?.group }}</td>
-                            <td>Shift</td>
-                            <td>{{ previewData?.student_data?.shift }}</td>
-                        </tr>
-                        <tr v-if="admissionConfig?.subject_status == 'YES'">
-                            <td>Subjects</td>
-                            <td colspan="7">
-                                Compulsory: (
-                                <span v-for="subject in parsedSubjects.compulsory" :key="subject"> {{ subject }}, </span>
-                                ) Group: (
-                                <span v-for="subject in parsedSubjects.group" :key="subject">{{ subject }}, </span>
-                                ) Optional: (
-                                <span v-for="subject in parsedSubjects.optional" :key="subject">{{ subject }}, </span>
-                                )
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
 
                 <table v-if="admissionConfig?.academic_info_status == 'YES'">
                     <caption class="text-left font-bold">
@@ -1476,7 +1482,7 @@ const isPaymentDeadlinePassed = computed(() => {
                     </tbody>
                 </table>
 
-                <table>
+                <!-- <table>
                     <caption class="text-left font-bold">
                         Guardian Information
                     </caption>
@@ -1497,9 +1503,9 @@ const isPaymentDeadlinePassed = computed(() => {
                             <td>{{ previewData?.student_data?.guardian_property }}</td>
                         </tr>
                     </tbody>
-                </table>
+                </table> -->
 
-                <table>
+                <!-- <table>
                     <caption class="text-left font-bold">
                         Covid-19 Vaccine Information
                     </caption>
@@ -1511,9 +1517,9 @@ const isPaymentDeadlinePassed = computed(() => {
                             <td>{{ previewData?.student_data?.vaccine ? previewData?.student_data?.vaccine_name : '' }}</td>
                         </tr>
                     </tbody>
-                </table>
+                </table> -->
 
-                <table>
+                <!-- <table>
                     <caption class="text-left font-bold">
                         Quota Information
                     </caption>
@@ -1525,7 +1531,8 @@ const isPaymentDeadlinePassed = computed(() => {
                             <td>{{ previewData?.student_data?.quota }}</td>
                         </tr>
                     </tbody>
-                </table>
+                </table> -->
+                
                 <table>
                     <caption class="text-left font-bold">
                         Attachments
@@ -1541,7 +1548,8 @@ const isPaymentDeadlinePassed = computed(() => {
                                     </a>
                                 </div>
                             </td>
-                            <td>Vaccine Certificate</td>
+
+                            <!-- <td>Vaccine Certificate</td>
                             <td>
                                 <div class="flex flex-wrap justify-content-start align-items-center">
                                     <i :class="previewData?.student_data?.vaccine_certificate ? 'pi pi-check-circle' : 'pi pi-times-circle'" />
@@ -1549,7 +1557,8 @@ const isPaymentDeadlinePassed = computed(() => {
                                         <Button label="show" v-if="previewData?.student_data?.vaccine_certificate" link class="no-print" />
                                     </a>
                                 </div>
-                            </td>
+                            </td> -->
+                            
                             <td>Birth Certificate/NID</td>
                             <td>
                                 <div class="flex flex-wrap justify-content-start align-items-center">
