@@ -720,7 +720,7 @@ const isPaymentDeadlinePassed = computed(() => {
                             </div>
 
                             <div class="col-12 md:col-6">
-                                <label for="student-birthReg">NID/Birth Registration <span style="color: tomato"> * </span></label>
+                                <label for="student-birthReg">NID/Birth Registration </label>
                                 <InputText id="student-birthReg" v-model="formData.student_nid_or_birth_no" class="w-full" placeholder="NID or Birth certificate no." />
                             </div>
 
@@ -750,10 +750,10 @@ const isPaymentDeadlinePassed = computed(() => {
                             <label for="ingredient3" class="ml-2 font-bold"> Parent Information </label>
                         </div>
                         <div class="grid" v-if="parent_edit">
-                            <div class="col-12 md:col-6">
+                            <!-- <div class="col-12 md:col-6">
                                 <label for="father-name-bangla">Father's Name (Bangla)</label>
                                 <InputText id="father-name-bangla" v-model="formData.father_name_bangla" class="w-full" placeholder="Father Name (Bangla)" />
-                            </div>
+                            </div> -->
                             <div class="col-12 md:col-6">
                                 <label for="father-name-english">Father's Name (English) <span style="color: tomato"> * </span></label>
                                 <InputText id="father-name-english" v-model="formData.father_name_english" class="w-full" placeholder="Father Name (English)" />
@@ -768,10 +768,10 @@ const isPaymentDeadlinePassed = computed(() => {
                                 <InputText id="father-mobile" v-model="formData.father_mobile" class="w-full" placeholder="Father's Contact" />
                             </div>
 
-                            <div class="col-12 md:col-6">
+                            <!-- <div class="col-12 md:col-6">
                                 <label for="mother-name-bangla">Mother's Name (Bangla)</label>
                                 <InputText id="mother-name-bangla" v-model="formData.mother_name_bangla" class="w-full" placeholder="Mother Name (Bangla)" />
-                            </div>
+                            </div> -->
 
                             <div class="col-12 md:col-6">
                                 <label for="mother-name-english">Mother's Name (English) <span style="color: tomato"> * </span></label>
@@ -1354,25 +1354,28 @@ const isPaymentDeadlinePassed = computed(() => {
                         <tr>
                             <td>Father's Name (English)</td>
                             <td>{{ previewData?.student_data?.father_name_english }}</td>
-                            <td>Father's Name (Bangla)</td>
-                            <td>{{ previewData?.student_data?.father_name_bangla }}</td>
+                            <!-- <td>Father's Name (Bangla)</td>
+                            <td>{{ previewData?.student_data?.father_name_bangla }}</td> -->
                             <td>Father's National ID</td>
                             <td>{{ previewData?.student_data?.father_nid }}</td>
+
+                            <td>Father's Contact</td>
+                            <td>{{ previewData?.student_data?.father_mobile }}</td>
                         </tr>
                         <tr>
                             <td>Mother's Name (English)</td>
                             <td>{{ previewData?.student_data?.mother_name_english }}</td>
-                            <td>Mother's Name (Bangla)</td>
-                            <td>{{ previewData?.student_data?.mother_name_bangla }}</td>
+                            <!-- <td>Mother's Name (Bangla)</td>
+                            <td>{{ previewData?.student_data?.mother_name_bangla }}</td> -->
                             <td>Mother's National ID</td>
                             <td>{{ previewData?.student_data?.mother_nid }}</td>
+                            <td>Mother's Contact</td>
+                            <td>{{ previewData?.student_data?.mother_mobile }}</td>
                         </tr>
 
                         <tr>
-                            <td>Father's Contact</td>
-                            <td>{{ previewData?.student_data?.father_mobile }}</td>
-                            <td>Mother's Contact</td>
-                            <td>{{ previewData?.student_data?.mother_mobile }}</td>
+                            
+                            
                         </tr>
                     </tbody>
                 </table>

@@ -49,12 +49,12 @@ const first = ref(0);
 const filters = ref({
     unique_number: { value: '', matchMode: 'contains' },
     assigned_roll: { value: '', matchMode: 'contains' },
-    edu_information: { value: '', matchMode: 'contains' },
-    student_name_bangla: { value: '', matchMode: 'contains' },
+    // edu_information: { value: '', matchMode: 'contains' },
+    // student_name_bangla: { value: '', matchMode: 'contains' },
     student_name_english: { value: '', matchMode: 'contains' },
-    class: { value: '', matchMode: 'contains' },
-    shift: { value: '', matchMode: 'contains' },
-    group: { value: '', matchMode: 'contains' },
+    class_name: { value: '', matchMode: 'contains' },
+    institute_name: { value: '', matchMode: 'contains' },
+    center_name: { value: '', matchMode: 'contains' },
     approval_status: { value: '', matchMode: 'contains' }
 });
 
@@ -64,11 +64,11 @@ const exportExcel = () => {
     const columns = [
         { header: 'Unique Number', key: 'unique_number' },
         { header: 'Assigned Roll', key: 'assigned_roll' },
-        { header: 'SSC Roll', key: 'edu_information' },
+        // { header: 'SSC Roll', key: 'edu_information' },
         { header: 'Name', key: 'student_name_english' },
-        { header: 'Class', key: 'class' },
-        { header: 'Shift', key: 'shift' },
-        { header: 'Group', key: 'group' },
+        { header: 'Class', key: 'class_name' },
+        { header: 'Institute', key: 'institute_name' },
+        { header: 'Center', key: 'center_name' },
         { header: 'Payment State', key: 'approval_status' }
     ];
 
@@ -99,18 +99,17 @@ const exportExcel = () => {
 const exportPDF = () => {
     const doc = new jsPDF();
     doc.autoTable({
-        head: [['Unique Number', 'Assigned Roll', 'SSC Roll', 'Name', 'Class', 'Shift', 'Group', 'Payment State']],
+        head: [['Unique Number', 'Assigned Roll', 'Name', 'Class', 'Shift', 'Group', 'Payment State']],
         body: selectedApplicants.value.map((item) => {
-            const eduInfo = JSON.parse(item.edu_information);
-            const sscRoll = eduInfo[0]?.roll ? eduInfo[0].roll : 'N/A';
+            // const eduInfo = JSON.parse(item.edu_information);
+            // const sscRoll = eduInfo[0]?.roll ? eduInfo[0].roll : 'N/A';
             return [
                 item.unique_number,
                 item.assigned_roll,
-                sscRoll,
                 item.student_name_english,
-                item.class,
-                item.shift,
-                item.group,
+                item.class_name,
+                item.institute_name,
+                item.center_name,
                 item.approval_status
             ];
         })
@@ -256,7 +255,7 @@ const onRowUnselect = () => {
             <Column field="Preview" header="Preview" class="text-capitalize">
                 <template #body="{ data }">
                     <div>
-                        <a :href="`${config.public.FRONTEND_URL}/application/preview/${data.unique_number}`" target="_blank">
+                        <a :href="`/application/preview/${data.unique_number}`" target="_blank">
                             <Button class="mx-auto" label="Preview" icon="pi pi-eye" link/>
                         </a>
                     </div>
@@ -288,38 +287,40 @@ const onRowUnselect = () => {
                 </template>
             </Column>
 
-            <Column style="min-width: 280px" class="capitalize" field="edu_information" header="SSC Roll" filterMatchMode="startsWith" sortable>
+            <!-- <Column style="min-width: 280px" class="capitalize" field="edu_information" header="SSC Roll" filterMatchMode="startsWith" sortable>
                 <template #filter="{ filterModel, filterCallback }">
                     <InputText type="text" v-model="filterModel.value" @keydown.enter="filterCallback()" class="p-column-filter" placeholder="Search" />
                 </template>
                 <template #body="{data}">
                     {{ JSON.parse(data.edu_information)[0]?.roll ?  `SSC: ${JSON.parse(data.edu_information)[0].roll}` : "N/A" }}
                 </template>
-            </Column>
+            </Column> -->
 
-            <Column style="min-width: 280px" class="capitalize" field="student_name_english" header="Name(English)" filterMatchMode="startsWith" sortable>
+            <Column style="min-width: 280px" class="capitalize" field="student_name_english" header="Name(English)" filterMatchMode="co" sortable>
                 <template #filter="{ filterModel, filterCallback }">
                     <InputText type="text" v-model="filterModel.value" @keydown.enter="filterCallback()" class="p-column-filter" placeholder="Search" />
                 </template>
             </Column>
 
-            <Column style="min-width: 280px" class="capitalize" field="student_name_bangla" header="Name(Bangla)" filterMatchMode="startsWith" sortable>
+            <!-- <Column style="min-width: 280px" class="capitalize" field="student_name_bangla" header="Name(Bangla)" filterMatchMode="co" sortable>
                 <template #filter="{ filterModel, filterCallback }">
                     <InputText type="text" v-model="filterModel.value" @keydown.enter="filterCallback()" class="p-column-filter" placeholder="Search" />
                 </template>
-            </Column>
+            </Column> -->
             
-            <Column style="min-width: 280px" class="capitalize" field="class" header="Class" filterMatchMode="startsWith" sortable>
+            <Column style="min-width: 280px" class="capitalize" field="class_name" header="Class" filterMatchMode="co" sortable>
                 <template #filter="{ filterModel, filterCallback }">
                     <InputText type="text" v-model="filterModel.value" @keydown.enter="filterCallback()" class="p-column-filter" placeholder="Search" />
                 </template>
             </Column>
-            <Column style="min-width: 280px" class="capitalize" field="shift" header="Shift" filterMatchMode="startsWith" sortable>
+
+            <Column style="min-width: 280px" class="capitalize" field="institute_name" header="Institute" filterMatchMode="co" sortable>
                 <template #filter="{ filterModel, filterCallback }">
                     <InputText type="text" v-model="filterModel.value" @keydown.enter="filterCallback()" class="p-column-filter" placeholder="Search" />
                 </template>
             </Column>
-            <Column style="min-width: 280px" class="capitalize" field="group" header="Group" filterMatchMode="startsWith" sortable>
+
+            <Column style="min-width: 280px" class="capitalize" field="center_name" header="Center" filterMatchMode="co" sortable>
                 <template #filter="{ filterModel, filterCallback }">
                     <InputText type="text" v-model="filterModel.value" @keydown.enter="filterCallback()" class="p-column-filter" placeholder="Search" />
                 </template>

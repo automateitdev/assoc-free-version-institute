@@ -109,8 +109,8 @@ definePageMeta({
                         <h6 class="font-bold m-0 text-center capitalize">Institute: {{ admitData?.student_data?.institute_name }}</h6>
                     </div>
                     <div class="grid justify-content-between">
-                        <p class="p-2 m-0 text-center">Center: {{ admitData?.admission_payment?.center_name }}</p>
-                        <p class="p-2 m-0 text-center">Exam At: {{ formatDateUTCPlus6(admitData?.admission_payment?.exam_date_time) }}</p>
+                        <h6 class="p-2 m-0 text-center">Center: {{ admitData?.admission_payment?.center_name }}</h6>
+                        <h6 class="p-2 m-0 text-center">Exam Time: {{ formatDateUTCPlus6(admitData?.admission_payment?.exam_date_time) }}</h6>
                     </div>
                     <!-- <div class="col-2">
                             <qrcode-vue :value="qrCodeValue" :size="80" class="qrcode" render-as="svg" />
@@ -144,6 +144,20 @@ definePageMeta({
                             </tr>
                         </tbody>
                     </table>
+
+                    <h6>Instructions for Candidates</h6>
+                    <ol>
+                        <li> Candidates must bring this Admit Card to the examination hall.</li>
+                        <li> Arrive at least 30 minutes before the scheduled time.</li>
+                        <li> Sit only in the allotted seat as per the seating arrangement.</li>
+                        <li> Mobile phones, calculators, smart watches, and any electronic devices are strictly prohibited.</li>
+                        <li> Any kind of unfair means will result in immediate cancellation of candidature.</li>
+                        <li> Talking or creating disturbance in the exam hall is not allowed.</li>
+                        <li> Write your Name, Roll, and Registration Number clearly on the answer sheet.</li>
+                        <li> Submit the answer script to the invigilator before leaving the hall.</li>
+                        <li> The decision of the authority shall be final in all matters.</li>
+                    </ol>
+
                     <p>
                         <small
                             >*This admit card was generated via: <a :href="currentLink"> {{ currentLink }}</a></small
