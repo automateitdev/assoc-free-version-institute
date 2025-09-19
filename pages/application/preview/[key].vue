@@ -1630,20 +1630,20 @@ const isPaymentDeadlinePassed = computed(() => {
                             </td>
                         </tr>
                     </table> -->
-                    <table class="signatures-table">
-                        <tbody>
+                    <table class="signatures-table" border-all>
+                        <tbody >
                             <tr>
-                                <td>
-                                    <p>Student Signature</p>
-                                    <span>{{ previewData?.student_data?.studentSignature }}</span>
-                                </td>
-                                <td>
-                                    <p>Signature of Convener</p>
-                                    <span>{{ previewData?.student_data?.convenerSignature }}</span>
-                                </td>
-                                <td>
-                                    <p>Signature of Principal</p>
+                                <td class="text-left">
+                                    <p class="text-center">Signature of Principal</p>
                                     <span>{{ previewData?.student_data?.principalSignature }}</span>
+                                </td>
+                                <td class="text-center">
+                                    <!-- <p>Signature of Convener</p>
+                                    <span>{{ previewData?.student_data?.convenerSignature }}</span> -->
+                                </td>
+                                <td class="text-right">
+                                    <p class="text-center">Signature of Coordinator</p>
+                                    <span>{{ previewData?.student_data?.coordinatorSign }}</span>
                                 </td>
                             </tr>
                         </tbody>
@@ -1695,7 +1695,7 @@ td {
 }
 
 .signatures-table p {
-    width: 70%;
+    /* width: 70%; */
     margin: 0;
     font-weight: bold;
     border-top: 2px dotted grey;
