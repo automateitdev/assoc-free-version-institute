@@ -79,10 +79,14 @@ const rollStart = ref(null);
 
 const admissionFor = reactive({
     academic_year: null,
+    academic_year_id: null,
     section: null,
     shift: []
 });
-
+watch(() => admissionFor.academic_year_id, (newId) => {
+    const selected = admissionAcademicYears.value.find(a => a.subcategory_id === newId);
+    admissionFor.academic_year = selected ? selected.subcategory_name : null;
+});
 // Function to format date to 'YYYY-MM-DD HH:MM:SS'
 function formatDateToSQL(date) {
     if (!date) return null;
@@ -99,6 +103,7 @@ async function submitAdmissionConfig() {
     try {
         const formData = new FormData();
         formData.append('academic_year', admissionFor.academic_year);
+        formData.append('academic_year_id', admissionFor.academic_year_id);
         formData.append('class_id', selectedClass.value.subcategory_id);
         formData.append('class_name', selectedClass.value.subcategory_name);
         formData.append('center_id', selectedCenter.value.subcategory_id);
@@ -368,7 +373,7 @@ const onRowUnselect = () => {
         <TabView>
             <TabPanel header="Admission Config">
                 <div class="flex flex-wrap mb-2 gap-2">
-                    <Dropdown class="capitalize" v-model="admissionFor.academic_year" :options="admissionAcademicYears" optionLabel="subcategory_name" optionValue="subcategory_name" placeholder="Academic Year">
+                    <Dropdown class="capitalize" v-model="admissionFor.academic_year_id" :options="admissionAcademicYears" optionLabel="subcategory_name" optionValue="subcategory_id" placeholder="Academic Year">
                         <template #option="slotProps">
                             <div class="flex align-items-center capitalize">
                                 <div>{{ slotProps.option.subcategory_name }}</div>

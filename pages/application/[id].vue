@@ -85,6 +85,7 @@ const getStudentInfo = async () => {
                 studentByRollFound.value = true;
                 subjectSearchForm.institute_details_id = admissionConfig.value.instiute_details.id;
                 (formData.academic_year = studentDataByRoll.value.admission_payment.academic_year),
+                (formData.academic_year_id = studentDataByRoll.value.admission_payment.academic_year_id),
                     (formData.center = studentDataByRoll.value.admission_payment.center),
                     (formData.institute = studentDataByRoll.value.admission_payment.group),
                     (formData.class = studentDataByRoll.value.admission_payment.class),
@@ -159,6 +160,7 @@ const formData = reactive({
     guardian_yearly_income: null,
     guardian_property: null,
     academic_year: null,
+    academic_year_id: null,
 
     class_id: null,
     class_name: null,
@@ -429,6 +431,8 @@ const customUploader = async (param) => {
 
 const subjectSearchForm = reactive({
     institute_details_id: null,
+    academic_year: null,
+    academic_year_id: null,
     class: null,
     center: null,
     institute: null
@@ -440,6 +444,7 @@ const instituteSubjOpts = ref([]);
 const getSubjects = async () => {
     subjectSearchForm.institute_details_id = admissionConfig.value.instiute_details.id;
     subjectSearchForm.academic_year = formData.academic_year;
+    subjectSearchForm.academic_year_id = formData.academic_year_id;
     subjectSearchForm.class = formData.class;
     subjectSearchForm.center = formData.center;
     subjectSearchForm.institute = formData.institute;
@@ -461,6 +466,11 @@ watch(
         }
     }
 );
+
+watch(() => formData.academic_year_id, (newId) => {
+    const selected = admissionConfig?.value?.details.find(a => a.academic_year_id === newId);
+    formData.academic_year = selected ? selected.academic_year : null;
+});
 
 const availableGroupSubjects = computed(() => {
     formData.subject.group = formData.instituteSubjects;
@@ -581,9 +591,9 @@ definePageMeta({
                                         filter
                                         id="permanentPS"
                                         :options="admissionConfig?.details"
-                                        v-model="formData.academic_year"
+                                        v-model="formData.academic_year_id"
                                         optionLabel="academic_year"
-                                        optionValue="academic_year"
+                                        optionValue="academic_year_id"
                                         placeholder="Select Academic year"
                                         class="w-full capitalize"
                                         :disabled="studentDataByRoll?.admission_payment?.academic_year"
