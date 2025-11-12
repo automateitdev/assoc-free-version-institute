@@ -25,6 +25,7 @@
         "html-to-pdfmake": "^2.5.2",
         "jspdf": "^2.5.1",
         "jspdf-autotable": "^3.8.2",
+        "lodash-es": "^4.17.21",
         "num2words": "^1.0.2",
         "pdfmake": "^0.2.9",
         "pinia": "^2.1.7",

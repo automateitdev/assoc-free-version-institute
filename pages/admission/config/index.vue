@@ -83,10 +83,13 @@ const admissionFor = reactive({
     section: null,
     shift: []
 });
-watch(() => admissionFor.academic_year_id, (newId) => {
-    const selected = admissionAcademicYears.value.find(a => a.subcategory_id === newId);
-    admissionFor.academic_year = selected ? selected.subcategory_name : null;
-});
+watch(
+    () => admissionFor.academic_year_id,
+    (newId) => {
+        const selected = admissionAcademicYears.value.find((a) => a.subcategory_id === newId);
+        admissionFor.academic_year = selected ? selected.subcategory_name : null;
+    }
+);
 // Function to format date to 'YYYY-MM-DD HH:MM:SS'
 function formatDateToSQL(date) {
     if (!date) return null;
@@ -438,11 +441,13 @@ const onRowUnselect = () => {
                 </Fieldset>
 
                 <DataTable
-                    showGridlines
+                    size="small"
                     stripedRows
+                    showGridlines
+                    resizableColumns
+                    columnResizeMode="fit"
                     v-model:selection="selectedForAdmission"
                     dataKey="institute_id"
-                    class="p-datatable-sm"
                     v-model:filters="filters"
                     :value="selectedInstitutes"
                     paginator
@@ -523,14 +528,16 @@ const onRowUnselect = () => {
             <TabPanel header="Configured">
                 <DataTable
                     size="small"
+                    stripedRows
+                    showGridlines
+                    resizableColumns
+                    columnResizeMode="fit"
                     v-model:filters="filters"
                     :value="existingConfigs"
                     paginator
                     :rows="5"
                     :rowsPerPageOptions="[5, 25, 50, 100]"
                     tableStyle="min-width: 75rem"
-                    showGridlines
-                    stripedRows
                     scrollable
                     scrollHeight="600px"
                     dataKey="id"
@@ -557,7 +564,7 @@ const onRowUnselect = () => {
 
                     <Column frozen header="Edit">
                         <template #body="{ data }">
-                            <Button icon="pi pi-pencil" class="p-button-rounded p-button-success p-button-text" @click="editAdmissionConfig(data)" />
+                            <Button size="small" icon="pi pi-pencil" class="p-button-rounded p-button-success p-button-text" @click="editAdmissionConfig(data)" />
                         </template>
                     </Column>
 
@@ -768,7 +775,6 @@ const onRowUnselect = () => {
                 <p class="p-0 m-0">Institute:: {{ selectedToEdit.institute_name }}</p>
             </div>
 
-            
             <div class="mb-3">
                 <label class="w-full" for="amountEdit">Amount</label>
                 <InputText v-model="selectedToEdit.amount" id="amountEdit" class="w-full" autocomplete="off" />

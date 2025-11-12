@@ -638,7 +638,7 @@ const payNow = async () => {
 };
 
 const isPaymentDeadlinePassed = computed(() => {
-    if(previewData.value?.deadline_status == 'passed'){
+    if (previewData.value?.deadline_status == 'passed') {
         return true;
     }
     return false;
@@ -650,9 +650,9 @@ const isPaymentDeadlinePassed = computed(() => {
 
     <div class="card flex mx-auto my-5 col-12 md:col-8">
         <div class="w-full" v-if="previewData?.student_data" :loading="loading">
-            <a :href="`${config.public.FRONTEND_URL}/application/${previewData?.student_data?.institute?.institute_id}`">
+            <router-link :to="`/application/${previewData?.student_data?.institute?.institute_id}`">
                 <Button label="Application" icon="pi pi-arrow-left" severity="info" outlined />
-            </a>
+            </router-link>
             <div class="notification">
                 <div v-if="isSupported" class="flex flex-wrap justify-content-center align-items-center text-center">
                     <Button @click="copy(previewData?.student_data?.unique_number)" :label="`Application ID: ${previewData?.student_data?.unique_number}`" :icon="copied ? 'pi pi-check-circle' : 'pi pi-copy'" severity="help" />
@@ -684,7 +684,6 @@ const isPaymentDeadlinePassed = computed(() => {
                         <Button label="Paid" icon="pi pi-check-circle" :disabled="true" text />
                     </div>
 
-                    
                     <div v-else-if="isPaymentDeadlinePassed">
                         <Button severity="danger" label="Deadline Passed" icon="pi pi-times-circle" :disabled="true" text />
                     </div>
@@ -1279,7 +1278,7 @@ const isPaymentDeadlinePassed = computed(() => {
                     </tbody>
                 </table>
 
-                                <table>
+                <table>
                     <caption class="text-left font-bold">
                         Academic Information
                     </caption>
@@ -1287,13 +1286,13 @@ const isPaymentDeadlinePassed = computed(() => {
                         <tr>
                             <td>Year/session</td>
                             <td>{{ previewData?.student_data?.academic_year }}</td>
-                            
+
                             <td>Class</td>
                             <td>{{ previewData?.student_data?.class_name }}</td>
 
                             <td>Institute</td>
                             <td>{{ previewData?.student_data?.institute_name }}</td>
-                            
+
                             <td>Center</td>
                             <td>{{ previewData?.student_data?.center_name }}</td>
                         </tr>
@@ -1311,7 +1310,6 @@ const isPaymentDeadlinePassed = computed(() => {
                         </tr>
                     </tbody>
                 </table>
-
 
                 <table>
                     <caption class="text-left font-bold">
@@ -1373,10 +1371,7 @@ const isPaymentDeadlinePassed = computed(() => {
                             <td>{{ previewData?.student_data?.mother_mobile }}</td>
                         </tr>
 
-                        <tr>
-                            
-                            
-                        </tr>
+                        <tr></tr>
                     </tbody>
                 </table>
 
@@ -1452,8 +1447,6 @@ const isPaymentDeadlinePassed = computed(() => {
                         </tr>
                     </tbody>
                 </table>
-
-
 
                 <table v-if="admissionConfig?.academic_info_status == 'YES'">
                     <caption class="text-left font-bold">
@@ -1535,7 +1528,7 @@ const isPaymentDeadlinePassed = computed(() => {
                         </tr>
                     </tbody>
                 </table> -->
-                
+
                 <table>
                     <caption class="text-left font-bold">
                         Attachments
@@ -1561,7 +1554,7 @@ const isPaymentDeadlinePassed = computed(() => {
                                     </a>
                                 </div>
                             </td> -->
-                            
+
                             <td>Birth Certificate/NID</td>
                             <td>
                                 <div class="flex flex-wrap justify-content-start align-items-center">
@@ -1631,7 +1624,7 @@ const isPaymentDeadlinePassed = computed(() => {
                         </tr>
                     </table> -->
                     <table class="signatures-table" border-all>
-                        <tbody >
+                        <tbody>
                             <tr>
                                 <td class="text-left">
                                     <p class="text-center">Signature of Principal</p>

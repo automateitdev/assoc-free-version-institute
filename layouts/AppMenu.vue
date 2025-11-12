@@ -149,6 +149,7 @@ const model = ref([
             { label: 'Startup', icon: 'pi pi-fw pi-book', to: '/admission/startup' },
             { label: 'Class Mapping', icon: 'pi pi-fw pi-wrench', to: '/admission/basic-setup' },
             { label: 'Admission Config', icon: 'pi pi-fw pi-cog', to: '/admission/config' },
+            { label: 'Exam Config', icon: 'pi pi-fw pi-pencil', to: '/admission/exam' },
             { label: 'Link Generate', icon: 'pi pi-fw pi-link', to: '/admission/makelink' }
             // { label: 'Lottery', icon: 'pi pi-fw pi-th-large', to: '/admission/lottery'},
         ]
