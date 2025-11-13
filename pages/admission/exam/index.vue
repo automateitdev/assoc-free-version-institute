@@ -472,7 +472,7 @@ const cancelExport = () => {
                             </template>
                         </Column>
 
-                        <Column header="Assigned Roll" field="assigned_roll">
+                        <Column header="Assigned Roll" field="assigned_roll" sortable >
                             <template #filter="{ filterModel, filterCallback }">
                                 <InputText type="text" v-model="filterModel.value" @keydown.enter="filterCallback()" class="p-column-filter" placeholder="Search" />
                             </template>
