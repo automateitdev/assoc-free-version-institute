@@ -3,6 +3,8 @@ import { useExamStore } from '~/stores/exam';
 import { useToast } from 'primevue/usetoast';
 import { FilterMatchMode, FilterOperator } from 'primevue/api';
 import debounce from 'lodash-es/debounce';
+import { useConfirm } from 'primevue/useconfirm';
+const confirm = useConfirm();
 
 const examStore = useExamStore();
 const toast = useToast();
@@ -218,6 +220,7 @@ const initFilters = () => {
     filters.value = {
         global: { value: null, matchMode: FilterMatchMode.CONTAINS },
         class_name: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.CONTAINS }] },
+        institute_name: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.CONTAINS }] },
         unique_number: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.CONTAINS }] },
         assigned_roll: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.CONTAINS }] },
         student_name_english: { operator: FilterOperator.AND, constraints: [{ value: null, matchMode: FilterMatchMode.CONTAINS }] }
@@ -290,6 +293,29 @@ const onRowSelect = () => {
 const onRowUnselect = () => {
     selectAll.value = false;
 };
+
+const generateSeatCard = () => {
+    const customParams = { ...lazyParams.value };
+    customParams.rows = -1;
+    examStore.startExport({
+        type: formData.type,
+        exam: searchForm.value.exam_id,
+        academic_year: searchForm.value.academic_year_id,
+        dt_params: customParams
+    });
+};
+
+const cancelExport = () => {
+    confirm.require({
+        message: 'Are you sure you want to cancel the export process?',
+        header: 'Confirmation',
+        icon: 'pi pi-exclamation-triangle',
+        severity: 'warning',
+        accept: () => {
+            examStore.cancelExport();
+        }
+    });
+};
 </script>
 
 <template>
@@ -346,93 +372,117 @@ const onRowUnselect = () => {
             </Dialog>
         </TabPanel>
         <TabPanel header="Seat Card">
-            <div class="flex flex-wrap justify-content-start align-items-end gap-2 mb-2" v-if="examStore.existingExams.length">
-                <Dropdown class="flex-1" v-model="searchForm.academic_year_id" :options="academicYearOptsForExam" optionLabel="label" optionValue="value" placeholder="Academic Year" />
-                <Dropdown class="flex-1" v-model="searchForm.exam_id" :options="examOpts" optionLabel="label" optionValue="value" placeholder="Select Exam" />
-                <Button label="Search" icon="pi pi-search" :loading="examStore.loading" @click="loadLazyData" :disabled="!searchForm.academic_year_id || !searchForm.exam_id" />
+            <div v-if="examStore.existingExams.length">
+                <div class="flex flex-wrap justify-content-start align-items-center gap-2 mb-2">
+                    <Dropdown class="flex-1" v-model="searchForm.academic_year_id" :options="academicYearOptsForExam" optionLabel="label" optionValue="value" placeholder="Academic Year" />
+                    <Dropdown class="flex-1" v-model="searchForm.exam_id" :options="examOpts" optionLabel="label" optionValue="value" placeholder="Select Exam" />
+                    <Button label="Search" icon="pi pi-search" :loading="examStore.loading" @click="loadLazyData" :disabled="!searchForm.academic_year_id || !searchForm.exam_id" />
+                </div>
+                <div>
+                    <DataTable
+                        lazy
+                        ref="dt"
+                        dataKey="id"
+                        paginator
+                        :first="first"
+                        :rows="15"
+                        :rowsPerPageOptions="[15, 25, 50, 100]"
+                        :totalRecords="totalRecords"
+                        :loading="examStore.loading"
+                        :value="examineeList"
+                        :selectAll="selectAll"
+                        :globalFilterFields="['class_name', 'institute_name', 'unique_number', 'assigned_roll', 'student_name_english']"
+                        v-model:selection="selectedExaminee"
+                        v-model:filters="filters"
+                        @page="onPage($event)"
+                        @sort="onSort($event)"
+                        @filter="onFilter($event)"
+                        @rowSelect="onRowSelect($event)"
+                        @rowUnselect="onRowUnselect($event)"
+                        @select-all-change="onSelectAllChange($event)"
+                        paginatorTemplate="RowsPerPageDropdown FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport"
+                        currentPageReportTemplate="Records: {totalRecords}"
+                        size="small"
+                        stripedRows
+                        showGridlines
+                        resizableColumns
+                        columnResizeMode="fit"
+                        sortable
+                        scrollable
+                        scrollHeight="500px"
+                        filterDisplay="menu"
+                    >
+                        <template #empty> No examinee. </template>
+
+                        <template #loading>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="3em" height="3em" viewBox="0 0 24 24">
+                                <g fill="none" stroke="rgb(237, 251, 251)" stroke-linecap="round" stroke-linejoin="round" stroke-width="2">
+                                    <path d="M3 12a9 9 0 0 0 9 9a9 9 0 0 0 9-9a9 9 0 0 0-9-9" stroke-dasharray="18 18" stroke-dashoffset="18">
+                                        <animateTransform attributeName="transform" type="rotate" from="0 12 12" to="360 12 12" dur="1s" repeatCount="indefinite" fill="freeze" />
+                                    </path>
+
+                                    <path d="M17 12a5 5 0 1 0-5 5" stroke-dasharray="10 10" stroke-dashoffset="10">
+                                        <animateTransform attributeName="transform" type="rotate" from="360 12 12" to="0 12 12" dur="1s" repeatCount="indefinite" fill="freeze" />
+                                    </path>
+                                </g>
+                            </svg>
+                        </template>
+
+                        <template #header>
+                            <div class="flex justify-content-between">
+                                <div class="flex flex-wrap gap-2">
+                                <Button rounded text label="Generate" icon="pi pi-file-pdf" severity="danger" :disabled="selectedExaminee.length <= 0 || examStore.exportInProgress" @click="generateSeatCard" />
+                                <div style="width: 200px; margin: auto" v-if="examStore.exportInProgress">
+                                    <ProgressBar mode="indeterminate" style="height: 10px" v-if="examStore.exportProgress === 0" />
+                                    <ProgressBar :value="examStore.exportProgress" :showValue="true" v-else />
+                                </div>
+                                <Button rounded severity="warning" text @click="cancelExport" icon="pi pi-times-circle" style="margin: auto" v-if="examStore.exportInProgress" />
+                                <ConfirmDialog />
+                                </div>
+                                <div>
+                                    <Button type="button" icon="pi pi-filter-slash" label="Clear" text @click="clearFilter()" />
+                                    <InputText v-model="filters['global'].value" placeholder="Keyword Search" @keyup.enter="globalFilterSearch()" />
+                                </div>
+                            </div>
+                        </template>
+
+                        <Column selectionMode="multiple"></Column>
+
+                        <Column header="Applicant ID" field="unique_number">
+                            <template #filter="{ filterModel, filterCallback }">
+                                <InputText type="text" v-model="filterModel.value" @keydown.enter="filterCallback()" class="p-column-filter" placeholder="Search" />
+                            </template>
+                        </Column>
+
+                        <Column header="Name" field="student_name_english">
+                            <template #filter="{ filterModel, filterCallback }">
+                                <InputText type="text" v-model="filterModel.value" @keydown.enter="filterCallback()" class="p-column-filter" placeholder="Search" />
+                            </template>
+                        </Column>
+
+                        <Column header="Class" field="class_name">
+                            <template #filter="{ filterModel, filterCallback }">
+                                <InputText type="text" v-model="filterModel.value" @keydown.enter="filterCallback()" class="p-column-filter" placeholder="Search" />
+                            </template>
+                        </Column>
+
+                        <Column header="Institute" field="institute_name">
+                            <template #filter="{ filterModel, filterCallback }">
+                                <InputText type="text" v-model="filterModel.value" @keydown.enter="filterCallback()" class="p-column-filter" placeholder="Search" />
+                            </template>
+                        </Column>
+
+                        <Column header="Assigned Roll" field="assigned_roll">
+                            <template #filter="{ filterModel, filterCallback }">
+                                <InputText type="text" v-model="filterModel.value" @keydown.enter="filterCallback()" class="p-column-filter" placeholder="Search" />
+                            </template>
+                        </Column>
+                    </DataTable>
+                </div>
             </div>
             <div v-else>
                 <Message :closable="false"> No exam setup found to search for seat card </Message>
             </div>
-
-            <DataTable
-                lazy
-                ref="dt"
-                dataKey="id"
-                paginator
-                :first="first"
-                :rows="15"
-                :rowsPerPageOptions="[15, 25, 50, 100]"
-                :totalRecords="totalRecords"
-                :loading="examStore.loading"
-                :value="examineeList"
-                :selectAll="selectAll"
-                :globalFilterFields="['class_name', 'unique_number', 'assigned_roll', 'student_name_english']"
-                v-model:selection="selectedExaminee"
-                v-model:filters="filters"
-                @page="onPage($event)"
-                @sort="onSort($event)"
-                @filter="onFilter($event)"
-                @rowSelect="onRowSelect($event)"
-                @rowUnselect="onRowUnselect($event)"
-                @select-all-change="onSelectAllChange($event)"
-                paginatorTemplate="RowsPerPageDropdown FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport"
-                currentPageReportTemplate="Records: {totalRecords}"
-                size="small"
-                stripedRows
-                showGridlines
-                resizableColumns
-                columnResizeMode="fit"
-                sortable
-                scrollable
-                scrollHeight="500px"
-                filterDisplay="menu"
-            >
-                <template #empty> No examinee. </template>
-
-                <template #loading>
-                    <svg xmlns="http://www.w3.org/2000/svg" width="3em" height="3em" viewBox="0 0 24 24">
-                        <g fill="none" stroke="rgb(237, 251, 251)" stroke-linecap="round" stroke-linejoin="round" stroke-width="2">
-                            <path d="M3 12a9 9 0 0 0 9 9a9 9 0 0 0 9-9a9 9 0 0 0-9-9" stroke-dasharray="18 18" stroke-dashoffset="18">
-                                <animateTransform attributeName="transform" type="rotate" from="0 12 12" to="360 12 12" dur="1s" repeatCount="indefinite" fill="freeze" />
-                            </path>
-
-                            <path d="M17 12a5 5 0 1 0-5 5" stroke-dasharray="10 10" stroke-dashoffset="10">
-                                <animateTransform attributeName="transform" type="rotate" from="360 12 12" to="0 12 12" dur="1s" repeatCount="indefinite" fill="freeze" />
-                            </path>
-                        </g>
-                    </svg>
-                </template>
-
-                <template #header>
-                    <div class="flex justify-content-end">
-                        <Button type="button" icon="pi pi-filter-slash" label="Clear" text @click="clearFilter()" />
-                        <InputText v-model="filters['global'].value" placeholder="Keyword Search" @keyup.enter="globalFilterSearch()" />
-                    </div>
-                </template>
-
-                <Column selectionMode="multiple"></Column>
-                <Column header="Applicant ID" field="unique_number">
-                    <template #filter="{ filterModel, filterCallback }">
-                        <InputText type="text" v-model="filterModel.value" @keydown.enter="filterCallback()" class="p-column-filter" placeholder="Search" />
-                    </template>
-                </Column>
-                <Column header="Name" field="student_name_english">
-                    <template #filter="{ filterModel, filterCallback }">
-                        <InputText type="text" v-model="filterModel.value" @keydown.enter="filterCallback()" class="p-column-filter" placeholder="Search" />
-                    </template>
-                </Column>
-                <Column header="Class" field="class_name">
-                    <template #filter="{ filterModel, filterCallback }">
-                        <InputText type="text" v-model="filterModel.value" @keydown.enter="filterCallback()" class="p-column-filter" placeholder="Search" />
-                    </template>
-                </Column>
-                <Column header="Assigned Roll" field="assigned_roll">
-                    <template #filter="{ filterModel, filterCallback }">
-                        <InputText type="text" v-model="filterModel.value" @keydown.enter="filterCallback()" class="p-column-filter" placeholder="Search" />
-                    </template>
-                </Column>
-            </DataTable>
         </TabPanel>
     </TabView>
 </template>

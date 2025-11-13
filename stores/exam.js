@@ -2,10 +2,16 @@ import { defineStore } from 'pinia'
 import axios from 'axios'
 export const useExamStore = defineStore('exam', {
   state: () => ({
+    error: null,
     loading: false,
     essentials: null,
     existingExams: [],
     examinee: [],
+    progressInterval: null,
+
+    exportInProgress: false,
+    exportProgress: 0,
+    exportReadyUrl: null,
   }),
   actions: {
     async fetchEssentials() {
@@ -127,6 +133,127 @@ export const useExamStore = defineStore('exam', {
       } finally {
         this.loading = false;
       }
+    },
+
+
+    // --- Start export ---
+    async startExport(payload) {
+      this.exportInProgress = true;
+      this.exportProgress = 0;
+      this.exportReadyUrl = null;
+      this.progressInterval = null;
+      try {
+        const { data } = await axios.post('seat-card/export', payload);
+        const exportId = data?.payload?.data?.exportId;
+
+        if (!exportId) {
+          throw new Error('Export ID not returned from server.');
+        }
+
+        // toast.add({ severity: 'info', summary: 'Export started', detail: 'Please wait...', life: 3000, group: 'br' });
+
+        // Start polling every 5 seconds
+        this.progressInterval = setInterval(() => this.fetchExportProgress(exportId), 5000);
+      } catch (err) {
+        this.exportInProgress = false;
+        this.handleAxiosError(err);
+      }
+    },
+
+
+
+    // --- Poll export progress ---
+    async fetchExportProgress(exportId) {
+      try {
+        const { data } = await axios.get('seat-card/export-progress', { params: { exportId } });
+        const payload = data?.payload?.data || {};
+
+        this.exportProgress = Number(payload.progress ?? 0);
+        const readyFile = payload.readyFile ?? null;
+
+        console.debug(`Progress check: ${this.exportProgress}% | readyFile: ${readyFile}`);
+
+        if (this.exportProgress < 0) {
+          this.cancelExport('Can not export currently. try again later.');
+          return;
+        }
+
+
+        if (readyFile) {
+          this.exportReadyUrl = readyFile;
+          this.exportProgress = 100;
+          this.exportInProgress = false;
+          clearInterval(this.progressInterval);
+          this.progressInterval = null;
+
+          // toast.add({
+          //   severity: 'success',
+          //   summary: 'Export Ready',
+          //   detail: 'Starting download...',
+          //   life: 3000,
+          // });
+
+          this.downloadExport();
+        }
+      } catch (err) {
+        console.error('Export progress error:', err);
+        // Optionally show error toast here
+      }
+    },
+
+    // --- Cancel export ---
+    async cancelExport(message = null) {
+      this.exportInProgress = false;
+      this.exportProgress = 0;
+
+      if (this.progressInterval) {
+        clearInterval(this.progressInterval);
+        this.progressInterval = null;
+      }
+
+      // toast.add({
+      //   severity: 'warn',
+      //   summary: 'Export Cancelled',
+      //   detail: message ?? 'You have cancelled the export process.',
+      //   life: 3000,
+      // });
+
+      // Optionally inform backend to cancel the job
+      // await axios.post('archive/export-cancel', { exportId });
+    },
+
+    // --- Download export file ---
+    downloadExport() {
+      if (!this.exportReadyUrl) return;
+
+      const url = this.exportReadyUrl.startsWith('/')
+        ? this.exportReadyUrl
+        : '/storage/' + this.exportReadyUrl;
+
+
+      console.log(url);
+
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = url.split('/').pop();
+      document.body.appendChild(link); // 👈 add to DOM
+      link.click();
+      document.body.removeChild(link); // 👈 clean up
+    },
+
+
+    handleAxiosError(err) {
+      if (err.response) {
+        const errors =
+          err.response.data.errors.validation_error ??
+          err.response.data.errors.system_error ??
+          err.response.data.errors.request_error;
+        this.error = errors.map(e => e.message).join('\n');
+      } else {
+        console.error('Error:', err);
+        this.error = 'Unexpected error occurred!';
+      }
+    // toast.add({ severity: 'error', summary: 'Error', detail: this.error, life: 3000, group: 'br' });
     }
   }
 })
