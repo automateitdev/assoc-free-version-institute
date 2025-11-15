@@ -412,7 +412,7 @@ const onFileUpload = async () => {
                 </div>
             </Dialog>
         </TabPanel>
-        <TabPanel header="Settings">
+        <TabPanel header="Process">
             <div v-if="examStore.existingExams.length">
                 <div class="flex flex-wrap justify-content-start align-items-center gap-2 mb-2">
                     <Dropdown class="" v-model="searchForm.academic_year_id" :options="academicYearOptsForExam" optionLabel="label" optionValue="value" placeholder="Academic Year" />
@@ -496,7 +496,7 @@ const onFileUpload = async () => {
                             </div>
                         </template>
 
-                        <Column selectionMode="multiple"></Column>
+                        <!-- <Column selectionMode="multiple"></Column> -->
 
                         <Column header="Applicant ID" field="unique_number">
                             <template #filter="{ filterModel, filterCallback }">
