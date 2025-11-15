@@ -7,6 +7,7 @@ export const useExamStore = defineStore('exam', {
     essentials: null,
     existingExams: [],
     examinee: [],
+    examConfig: null,
     progressInterval: null,
 
     exportInProgress: false,
@@ -117,9 +118,10 @@ export const useExamStore = defineStore('exam', {
           dt_params: lazyParams,
         });
 
-        const { status, message, error = null, list } = response.data.payload.data;
+        const { status, message, error = null, list, examConf } = response.data.payload.data;
         if (status === 'success') {
           this.examinee = list;
+          this.examConfig = examConf;
         }
       } catch (error) {
         console.error(error)
@@ -134,6 +136,28 @@ export const useExamStore = defineStore('exam', {
         this.loading = false;
       }
     },
+
+
+    getGradeInfo(mark) {
+      if (mark === null || mark === undefined || mark === "") return { grade: "", gradePoint: "" };
+
+      const ranges = [
+        { from: 80, to: 100, grade: "A+", gradePoint: 5.00 },
+        { from: 70, to: 79.99, grade: "A", gradePoint: 4.50 },
+        { from: 60, to: 69.99, grade: "A-", gradePoint: 4.00 },
+        { from: 50, to: 59.99, grade: "B", gradePoint: 3.00 },
+        { from: 40, to: 49.99, grade: "C", gradePoint: 2.00 },
+        { from: 30, to: 39.99, grade: "D", gradePoint: 1.00 },
+        { from: 0, to: 32.99, grade: "F", gradePoint: 0.00 },
+      ];
+
+      const result = ranges.find(r => mark >= r.from && mark <= r.to);
+
+      return result
+        ? { grade: result.grade, gradePoint: result.gradePoint }
+        : { grade: "", gradePoint: "" };
+    },
+
 
 
     // --- Start export ---
@@ -160,12 +184,34 @@ export const useExamStore = defineStore('exam', {
       }
     },
 
+    async startMarkSheetExport(payload) {
+      this.exportInProgress = true;
+      this.exportProgress = 0;
+      this.exportReadyUrl = null;
+      this.progressInterval = null;
+      try {
+        const { data } = await axios.post('mark-sheet/export', payload);
+        const exportId = data?.payload?.data?.exportId;
 
+        if (!exportId) {
+          throw new Error('Export ID not returned from server.');
+        }
+
+        // toast.add({ severity: 'info', summary: 'Export started', detail: 'Please wait...', life: 3000, group: 'br' });
+
+        // Start polling every 5 seconds
+        this.progressInterval = setInterval(() => this.fetchExportProgress(exportId), 5000);
+      } catch (err) {
+        console.error(err)
+        this.exportInProgress = false;
+        this.handleAxiosError(err);
+      }
+    },
 
     // --- Poll export progress ---
     async fetchExportProgress(exportId) {
       try {
-        const { data } = await axios.get('seat-card/export-progress', { params: { exportId } });
+        const { data } = await axios.get('export-progress', { params: { exportId } });
         const payload = data?.payload?.data || {};
 
         this.exportProgress = Number(payload.progress ?? 0);
@@ -242,6 +288,25 @@ export const useExamStore = defineStore('exam', {
     },
 
 
+    async importExamMark(payload) {
+      try {
+        this.loading = true;
+        const { status, message, error = null } = await axios.post('mark-sheet/import', payload);
+        if (status === 'success') {
+          return { status: status, message: message, error: error }
+        } else {
+          if (error.response) {
+            this.handleAxiosError(error.response);
+          }
+        }
+      } catch (err) {
+        console.error(err)
+      } finally {
+        this.loading = false;
+      }
+    },
+
+
     handleAxiosError(err) {
       if (err.response) {
         const errors =
@@ -253,7 +318,7 @@ export const useExamStore = defineStore('exam', {
         console.error('Error:', err);
         this.error = 'Unexpected error occurred!';
       }
-    // toast.add({ severity: 'error', summary: 'Error', detail: this.error, life: 3000, group: 'br' });
+      // toast.add({ severity: 'error', summary: 'Error', detail: this.error, life: 3000, group: 'br' });
     }
   }
 })

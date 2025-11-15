@@ -305,6 +305,17 @@ const generateSeatCard = () => {
     });
 };
 
+const exportMarkSheet = () => {
+    const customParams = { ...lazyParams.value };
+    customParams.rows = -1;
+    examStore.startMarkSheetExport({
+        type: formData.type,
+        exam: searchForm.value.exam_id,
+        academic_year: searchForm.value.academic_year_id,
+        dt_params: customParams
+    });
+};
+
 const cancelExport = () => {
     confirm.require({
         message: 'Are you sure you want to cancel the export process?',
@@ -316,11 +327,45 @@ const cancelExport = () => {
         }
     });
 };
+
+const selectedFile = ref(null);
+const onFileSelect = ($event) => {
+    console.log($event.files);
+    selectedFile.value = $event.files ? $event.files[0] : null;
+};
+
+const onFileUpload = async () => {
+    if (!selectedFile.value) {
+        toast.add({ severity: 'warn', summary: 'No file', detail: 'Please select a file' });
+        return;
+    }
+
+    try {
+        let payload = new FormData();
+        payload.append('file', selectedFile.value);
+        payload.append('exam_id', searchForm.value.exam_id); // pass the exam_id
+
+        const { status, message, error } = await examStore.importExamMark(payload);
+        if (status === 'success') {
+            selectedFile.value = null;
+            const searchPayload = {
+                exam: searchForm.value.exam_id,
+                academic_year: searchForm.value.academic_year_id
+            };
+            await examStore.fetchExaminee(searchPayload, lazyParams.value);
+            toast.add({ severity: 'success', summary: 'Success Message', detail: message, group: 'br', life: 5000 });
+        } else {
+            toast.add({ severity: 'error', summary: 'Error Message', detail: error, group: 'br', life: 5000 });
+        }
+    } catch (error) {
+        toast.add({ severity: 'error', summary: 'Error', detail: error.response?.data?.message || error.message });
+    }
+};
 </script>
 
 <template>
     <TabView>
-        <TabPanel header="Settings">
+        <TabPanel header="Configuration">
             <div class="flex flex-wrap justify-content-start align-items-end gap-2 mb-2">
                 <Dropdown class="flex-1" v-model="formData.academic_year_id" :options="academicYearOpts" optionLabel="label" optionValue="value" placeholder="Academic Year" />
                 <Dropdown class="flex-1" v-model="formData.class_id" :options="classOpts" optionLabel="label" optionValue="value" placeholder="Select Class" />
@@ -371,14 +416,21 @@ const cancelExport = () => {
                 </div>
             </Dialog>
         </TabPanel>
-        <TabPanel header="Seat Card">
+        <TabPanel header="Settings">
             <div v-if="examStore.existingExams.length">
                 <div class="flex flex-wrap justify-content-start align-items-center gap-2 mb-2">
-                    <Dropdown class="flex-1" v-model="searchForm.academic_year_id" :options="academicYearOptsForExam" optionLabel="label" optionValue="value" placeholder="Academic Year" />
-                    <Dropdown class="flex-1" v-model="searchForm.exam_id" :options="examOpts" optionLabel="label" optionValue="value" placeholder="Select Exam" />
+                    <Dropdown class="" v-model="searchForm.academic_year_id" :options="academicYearOptsForExam" optionLabel="label" optionValue="value" placeholder="Academic Year" />
+                    <Dropdown class="" v-model="searchForm.exam_id" :options="examOpts" optionLabel="label" optionValue="value" placeholder="Select Exam" />
                     <Button label="Search" icon="pi pi-search" :loading="examStore.loading" @click="loadLazyData" :disabled="!searchForm.academic_year_id || !searchForm.exam_id" />
                 </div>
                 <div>
+                    <div class="flex flex-wrap gap-2 my-2">
+                        <Button severity="secondary" size="small" label="Export Mark Sheet" @click="exportMarkSheet" icon="pi pi-download" :disabled="!selectedExaminee.length || examStore.exportInProgress" />
+                        <div class="flex gap-1">
+                            <FileUpload mode="basic" :customUpload="true" @select="onFileSelect($event)" chooseLabel="Select CSV/XLSX" severity="secondary" :disabled="!selectedExaminee.length || examStore.exportInProgress" :auto="false" />
+                            <Button size="small" severity="secondary" icon="pi pi-upload" :disabled="!selectedFile || !selectedExaminee.length || examStore.exportInProgress" @click="onFileUpload" :loading="examStore.loading" />
+                        </div>
+                    </div>
                     <DataTable
                         lazy
                         ref="dt"
@@ -407,7 +459,6 @@ const cancelExport = () => {
                         showGridlines
                         resizableColumns
                         columnResizeMode="fit"
-                        sortable
                         scrollable
                         scrollHeight="500px"
                         filterDisplay="menu"
@@ -430,17 +481,20 @@ const cancelExport = () => {
 
                         <template #header>
                             <div class="flex justify-content-between">
-                                <div class="flex flex-wrap gap-2">
-                                <Button rounded text label="Generate" icon="pi pi-file-pdf" severity="danger" :disabled="selectedExaminee.length <= 0 || examStore.exportInProgress" @click="generateSeatCard" />
-                                <div style="width: 200px; margin: auto" v-if="examStore.exportInProgress">
-                                    <ProgressBar mode="indeterminate" style="height: 10px" v-if="examStore.exportProgress === 0" />
-                                    <ProgressBar :value="examStore.exportProgress" :showValue="true" v-else />
-                                </div>
-                                <Button rounded severity="warning" text @click="cancelExport" icon="pi pi-times-circle" style="margin: auto" v-if="examStore.exportInProgress" />
-                                <ConfirmDialog />
+                                <div class="flex flex-wrap align-items-center gap-2">
+                                    <Button size="small" rounded text label="Seat Card" icon="pi pi-file-pdf" severity="danger" :disabled="selectedExaminee.length <= 0 || examStore.exportInProgress" @click="generateSeatCard" />
+
+                                    <Button size="small" rounded text label="Certificate" icon="pi pi-file-pdf" severity="danger" :disabled="selectedExaminee.length <= 0 || examStore.exportInProgress" @click="generateSeatCard" />
+
+                                    <div style="width: 200px; margin: auto" v-if="examStore.exportInProgress">
+                                        <ProgressBar mode="indeterminate" style="height: 10px" v-if="examStore.exportProgress === 0" />
+                                        <ProgressBar :value="examStore.exportProgress" :showValue="true" v-else />
+                                    </div>
+                                    <Button rounded severity="warning" text @click="cancelExport" icon="pi pi-times-circle" style="margin: auto" v-if="examStore.exportInProgress" />
+                                    <ConfirmDialog />
                                 </div>
                                 <div>
-                                    <Button type="button" icon="pi pi-filter-slash" label="Clear" text @click="clearFilter()" />
+                                    <Button size="small" icon="pi pi-filter-slash" text @click="clearFilter()" />
                                     <InputText v-model="filters['global'].value" placeholder="Keyword Search" @keyup.enter="globalFilterSearch()" />
                                 </div>
                             </div>
@@ -472,9 +526,33 @@ const cancelExport = () => {
                             </template>
                         </Column>
 
-                        <Column header="Assigned Roll" field="assigned_roll" sortable >
+                        <Column header="Assigned Roll" field="assigned_roll" sortable>
                             <template #filter="{ filterModel, filterCallback }">
                                 <InputText type="text" v-model="filterModel.value" @keydown.enter="filterCallback()" class="p-column-filter" placeholder="Search" />
+                            </template>
+                        </Column>
+
+                        <Column header="Total Mark" field="Total Mark">
+                            <template #body="{ data }">
+                                {{ examStore.examConfig.total_marks }}
+                            </template>
+                        </Column>
+
+                        <Column header="Obtained Mark" field="Total Mark">
+                            <template #body="{ data }">
+                                <InputNumber v-model="data.exam_mark.obtained_mark" :useGruping="false" :max="examStore.examConfig.total_marks" placeholder="Enter obtained mark" :maxFractionDigits="2" :disabled="!selectedExaminee.includes(data)" />
+                            </template>
+                        </Column>
+
+                        <Column header="Obtained Grade">
+                            <template #body="{ data }">
+                                {{ data.exam_mark.obtained_grade }}
+                            </template>
+                        </Column>
+
+                        <Column header="Obtained Grade Point">
+                            <template #body="{ data }">
+                                {{ data.exam_mark.obtained_grade_point }}
                             </template>
                         </Column>
                     </DataTable>
