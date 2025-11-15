@@ -480,7 +480,7 @@ const onFileUpload = async () => {
                                 <div class="flex flex-wrap align-items-center gap-2">
                                     <Button size="small" rounded text label="Seat Card" icon="pi pi-file-pdf" severity="danger" :disabled="selectedExaminee.length <= 0 || examStore.exportInProgress" @click="generateSeatCard" />
 
-                                    <Button size="small" rounded text label="Certificate" icon="pi pi-file-pdf" severity="danger" :disabled="selectedExaminee.length <= 0 || examStore.exportInProgress" @click="generateSeatCard" />
+                                    <!-- <Button size="small" rounded text label="Certificate" icon="pi pi-file-pdf" severity="danger" :disabled="selectedExaminee.length <= 0 || examStore.exportInProgress" @click="generateSeatCard" /> -->
 
                                     <div style="width: 200px; margin: auto" v-if="examStore.exportInProgress">
                                         <ProgressBar mode="indeterminate" style="height: 10px" v-if="examStore.exportProgress === 0" />
