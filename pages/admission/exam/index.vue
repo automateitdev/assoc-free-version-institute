@@ -347,12 +347,8 @@ const onFileUpload = async () => {
 
         const { status, message, error } = await examStore.importExamMark(payload);
         if (status === 'success') {
+            await loadLazyData();
             selectedFile.value = null;
-            const searchPayload = {
-                exam: searchForm.value.exam_id,
-                academic_year: searchForm.value.academic_year_id
-            };
-            await examStore.fetchExaminee(searchPayload, lazyParams.value);
             toast.add({ severity: 'success', summary: 'Success Message', detail: message, group: 'br', life: 5000 });
         } else {
             toast.add({ severity: 'error', summary: 'Error Message', detail: error, group: 'br', life: 5000 });
@@ -427,8 +423,8 @@ const onFileUpload = async () => {
                     <div class="flex flex-wrap gap-2 my-2">
                         <Button severity="secondary" size="small" label="Export Mark Sheet" @click="exportMarkSheet" icon="pi pi-download" :disabled="!selectedExaminee.length || examStore.exportInProgress" />
                         <div class="flex gap-1">
-                            <FileUpload mode="basic" :customUpload="true" @select="onFileSelect($event)" chooseLabel="Select CSV/XLSX" severity="secondary" :disabled="!selectedExaminee.length || examStore.exportInProgress" :auto="false" />
-                            <Button size="small" severity="secondary" icon="pi pi-saveg" :disabled="!selectedFile || !selectedExaminee.length || examStore.exportInProgress" @click="onFileUpload" :loading="examStore.loading" />
+                            <FileUpload mode="basic" :customUpload="true" @select="onFileSelect($event)" chooseLabel="Select CSV/XLSX" severity="secondary" :disabled="examStore.exportInProgress" :auto="false" />
+                            <Button size="small" severity="success" icon="pi pi-save" :disabled="!selectedFile || examStore.exportInProgress" @click="onFileUpload" :loading="examStore.loading" />
                         </div>
                     </div>
                     <DataTable
@@ -539,8 +535,9 @@ const onFileUpload = async () => {
                         </Column>
 
                         <Column header="Obtained Mark" field="Total Mark">
+                            <!-- :disabled="!selectedExaminee.includes(data)" -->
                             <template #body="{ data }">
-                                <InputNumber v-model="data.exam_mark.obtained_mark" :useGruping="false" :max="examStore.examConfig.total_marks" placeholder="Enter obtained mark" :maxFractionDigits="2" :disabled="!selectedExaminee.includes(data)" />
+                                <InputNumber v-model="data.exam_mark.obtained_mark" :useGruping="false" :max="examStore.examConfig.total_marks" placeholder="Enter obtained mark" :maxFractionDigits="2" disabled />
                             </template>
                         </Column>
 

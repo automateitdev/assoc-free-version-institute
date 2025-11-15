@@ -291,7 +291,8 @@ export const useExamStore = defineStore('exam', {
     async importExamMark(payload) {
       try {
         this.loading = true;
-        const { status, message, error = null } = await axios.post('mark-sheet/import', payload);
+        const response = await axios.post('mark-sheet/import', payload);
+        const { status, message, error = null } = response.data.payload.data;
         if (status === 'success') {
           return { status: status, message: message, error: error }
         } else {
