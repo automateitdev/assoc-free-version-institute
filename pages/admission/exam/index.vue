@@ -421,7 +421,7 @@ const onFileUpload = async () => {
                 </div>
                 <div>
                     <div class="flex flex-wrap gap-2 my-2">
-                        <Button severity="secondary" label="Export Marks" @click="exportMarkSheet" icon="pi pi-download" :disabled="examStore.exportInProgress" />
+                        <Button severity="secondary" label="Export Marks" @click="exportMarkSheet" icon="pi pi-download" :disabled="!examineeList.length || examStore.exportInProgress" />
                         <div class="flex gap-1">
                             <FileUpload mode="basic" :customUpload="true" @select="onFileSelect($event)" chooseLabel="Import Marks" severity="secondary" :disabled="examStore.exportInProgress" :auto="false"/>
                             <Button severity="success" icon="pi pi-save" :disabled="!selectedFile || examStore.exportInProgress" @click="onFileUpload" :loading="examStore.loading" />
