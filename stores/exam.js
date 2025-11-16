@@ -7,6 +7,7 @@ export const useExamStore = defineStore('exam', {
     essentials: null,
     existingExams: [],
     examinee: [],
+    rankings: [],
     examConfig: null,
     progressInterval: null,
 
@@ -137,6 +138,33 @@ export const useExamStore = defineStore('exam', {
       }
     },
 
+    async fetchExamRanking(payload) {
+      try {
+        this.loading = true;
+        const response = await axios.post('/exam/ranking', payload);
+
+        const { status, message, error = null, list } = response.data.payload.data;
+        if (status === 'success') {
+          this.rankings = list;
+        } else {
+          if (error.response) {
+            this.handleAxiosError(error.response);
+          }
+        }
+      } catch (error) {
+        console.error(error)
+        if (error.response) {
+          const errors = error.response.data.errors.validation_error ?? error.response.data.errors.system_error ?? error.response.data.errors.request_error;
+          const formattedErrors = errors.map(err => `${err.message}`).join('\n');
+          return { loginSuccess: false, error: formattedErrors };
+        } else {
+          return { loginSuccess: false, error: "An error occurred during login." };
+        }
+      } finally {
+        this.loading = false;
+      }
+    },
+
 
     getGradeInfo(mark) {
       if (mark === null || mark === undefined || mark === "") return { grade: "", gradePoint: "" };
@@ -168,6 +196,29 @@ export const useExamStore = defineStore('exam', {
       this.progressInterval = null;
       try {
         const { data } = await axios.post('seat-card/export', payload);
+        const exportId = data?.payload?.data?.exportId;
+
+        if (!exportId) {
+          throw new Error('Export ID not returned from server.');
+        }
+
+        // toast.add({ severity: 'info', summary: 'Export started', detail: 'Please wait...', life: 3000, group: 'br' });
+
+        // Start polling every 5 seconds
+        this.progressInterval = setInterval(() => this.fetchExportProgress(exportId), 5000);
+      } catch (err) {
+        this.exportInProgress = false;
+        this.handleAxiosError(err);
+      }
+    },
+
+    async startCertificateExport(payload) {
+      this.exportInProgress = true;
+      this.exportProgress = 0;
+      this.exportReadyUrl = null;
+      this.progressInterval = null;
+      try {
+        const { data } = await axios.post('certificate/export', payload);
         const exportId = data?.payload?.data?.exportId;
 
         if (!exportId) {

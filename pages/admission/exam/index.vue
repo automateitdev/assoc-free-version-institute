@@ -298,7 +298,6 @@ const generateSeatCard = () => {
     const customParams = { ...lazyParams.value };
     customParams.rows = -1;
     examStore.startExport({
-        type: formData.type,
         exam: searchForm.value.exam_id,
         academic_year: searchForm.value.academic_year_id,
         dt_params: customParams
@@ -356,6 +355,30 @@ const onFileUpload = async () => {
     } catch (error) {
         toast.add({ severity: 'error', summary: 'Error', detail: error.response?.data?.message || error.message });
     }
+};
+
+const rankList = ref([]);
+const getExamRanking = async () => {
+    try {
+        const payload = {
+            exam: searchForm.value.exam_id
+        };
+        await examStore.fetchExamRanking(payload);
+        rankList.value = examStore.rankings.data;
+        toast.add({ severity: 'success', summary: 'Success Message', detail: message, group: 'br', life: 5000 });
+    } catch (error) {
+        toast.add({ severity: 'error', summary: 'Error', detail: error.response?.data?.message || error.message });
+    }
+};
+
+const generateCertificate = async () => {
+    const customParams = { ...lazyParams.value };
+    customParams.rows = -1;
+    examStore.startCertificateExport({
+        exam: searchForm.value.exam_id,
+        academic_year: searchForm.value.academic_year_id,
+        dt_params: customParams
+    });
 };
 </script>
 
@@ -423,7 +446,7 @@ const onFileUpload = async () => {
                     <div class="flex flex-wrap gap-2 my-2">
                         <Button severity="secondary" label="Export Marks" @click="exportMarkSheet" icon="pi pi-download" :disabled="!examineeList.length || examStore.exportInProgress" />
                         <div class="flex gap-1">
-                            <FileUpload mode="basic" :customUpload="true" @select="onFileSelect($event)" chooseLabel="Import Marks" severity="secondary" :disabled="examStore.exportInProgress" :auto="false"/>
+                            <FileUpload mode="basic" :customUpload="true" @select="onFileSelect($event)" chooseLabel="Import Marks" severity="secondary" :disabled="examStore.exportInProgress" :auto="false" />
                             <Button severity="success" icon="pi pi-save" :disabled="!selectedFile || examStore.exportInProgress" @click="onFileUpload" :loading="examStore.loading" />
                         </div>
                     </div>
@@ -478,7 +501,7 @@ const onFileUpload = async () => {
                         <template #header>
                             <div class="flex justify-content-between">
                                 <div class="flex flex-wrap align-items-center gap-2">
-                                    <Button size="small" rounded text label="Seat Card" icon="pi pi-file-pdf" severity="danger" :disabled="selectedExaminee.length <= 0 || examStore.exportInProgress" @click="generateSeatCard" />
+                                    <Button size="small" rounded text label="Seat Card" icon="pi pi-file-pdf" severity="danger" :disabled="examStore.exportInProgress" @click="generateSeatCard" />
 
                                     <!-- <Button size="small" rounded text label="Certificate" icon="pi pi-file-pdf" severity="danger" :disabled="selectedExaminee.length <= 0 || examStore.exportInProgress" @click="generateSeatCard" /> -->
 
@@ -554,6 +577,68 @@ const onFileUpload = async () => {
                         </Column>
                     </DataTable>
                 </div>
+            </div>
+            <div v-else>
+                <Message :closable="false"> No exam setup found to search for seat card </Message>
+            </div>
+        </TabPanel>
+
+        <TabPanel header="Ranking">
+            <div v-if="examStore.existingExams.length">
+                <div class="flex flex-wrap justify-content-start align-items-center gap-2 mb-2">
+                    <Dropdown class="" v-model="searchForm.academic_year_id" :options="academicYearOptsForExam" optionLabel="label" optionValue="value" placeholder="Academic Year" />
+                    <Dropdown class="" v-model="searchForm.exam_id" :options="examOpts" optionLabel="label" optionValue="value" placeholder="Select Exam" />
+                    <Button label="Search" icon="pi pi-search" :loading="examStore.loading" @click="getExamRanking" :disabled="!searchForm.academic_year_id || !searchForm.exam_id" />
+                </div>
+
+                <DataTable :value="rankList" showGridlines stripedRows resizableColumns columnResizeMode="fit" size="small" :loading="examStore.loading">
+                    <template #empty> No Ranking. </template>
+
+                    <template #loading>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="3em" height="3em" viewBox="0 0 24 24">
+                            <g fill="none" stroke="rgb(237, 251, 251)" stroke-linecap="round" stroke-linejoin="round" stroke-width="2">
+                                <path d="M3 12a9 9 0 0 0 9 9a9 9 0 0 0 9-9a9 9 0 0 0-9-9" stroke-dasharray="18 18" stroke-dashoffset="18">
+                                    <animateTransform attributeName="transform" type="rotate" from="0 12 12" to="360 12 12" dur="1s" repeatCount="indefinite" fill="freeze" />
+                                </path>
+
+                                <path d="M17 12a5 5 0 1 0-5 5" stroke-dasharray="10 10" stroke-dashoffset="10">
+                                    <animateTransform attributeName="transform" type="rotate" from="360 12 12" to="0 12 12" dur="1s" repeatCount="indefinite" fill="freeze" />
+                                </path>
+                            </g>
+                        </svg>
+                    </template>
+
+                    <template #header>
+                        <div class="flex justify-content-between">
+                            <div class="flex flex-wrap align-items-center gap-2">
+                                <Button size="small" rounded text label="Certificate" icon="pi pi-file-pdf" severity="danger" :disabled="!rankList.length || examStore.exportInProgress" @click="generateCertificate" />
+
+                                <!-- <Button size="small" rounded text label="Certificate" icon="pi pi-file-pdf" severity="danger" :disabled="selectedExaminee.length <= 0 || examStore.exportInProgress" @click="generateSeatCard" /> -->
+
+                                <div style="width: 200px; margin: auto" v-if="examStore.exportInProgress">
+                                    <ProgressBar mode="indeterminate" style="height: 10px" v-if="examStore.exportProgress === 0" />
+                                    <ProgressBar :value="examStore.exportProgress" :showValue="true" v-else />
+                                </div>
+                                <Button rounded severity="warning" text @click="cancelExport" icon="pi pi-times-circle" style="margin: auto" v-if="examStore.exportInProgress" />
+                            </div>
+                        </div>
+                    </template>
+
+                    <!-- Ranking -->
+                    <Column header="Rank">
+                        <template #body="slotProps">
+                            {{ slotProps.index + 1 }}
+                        </template>
+                    </Column>
+
+                    <Column field="applicant.unique_number" header="Applicant ID"></Column>
+                    <Column field="applicant.student_name_english" header="Name"></Column>
+                    <Column field="applicant.class_name" header="Class"></Column>
+                    <Column field="applicant.center_name" header="Center"></Column>
+                    <Column field="applicant.institute_name" header="Institute"></Column>
+                    <Column field="total_mark" header="Total Mark"></Column>
+                    <Column field="obtained_mark" header="Obtained Mark"></Column>
+                </DataTable>
             </div>
             <div v-else>
                 <Message :closable="false"> No exam setup found to search for seat card </Message>
