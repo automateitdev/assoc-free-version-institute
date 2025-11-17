@@ -632,6 +632,7 @@ const generateCertificate = async () => {
                     </Column>
 
                     <Column field="applicant.unique_number" header="Applicant ID"></Column>
+                    <Column field="applicant.assigned_roll" header="Assigned Roll"></Column>
                     <Column field="applicant.student_name_english" header="Name"></Column>
                     <Column field="applicant.class_name" header="Class"></Column>
                     <Column field="applicant.center_name" header="Center"></Column>
