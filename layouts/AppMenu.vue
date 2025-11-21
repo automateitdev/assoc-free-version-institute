@@ -139,8 +139,9 @@ const model = ref([
         label: 'Maintenance',
         items: [
             // { label: 'Startup', icon: 'pi pi-fw pi-play', to: '/master-settings/institute/startup' },
-            { label: 'Basic Setup', icon: 'pi pi-fw pi-sliders-h', to: '/master-settings/institute/basic-setup' }
+            { label: 'Basic Setup', icon: 'pi pi-fw pi-sliders-h', to: '/master-settings/institute/basic-setup' },
             // { label: 'Class Setup', icon: 'pi pi-fw pi-cog', to: '/master-settings/institute/class' }
+            { label: 'Signatures', icon: 'pi pi-fw pi-plus-circle', to: '/master-settings/institute/signatures' }
         ]
     },
     {
