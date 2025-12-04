@@ -450,7 +450,6 @@ const generateCertificate = async () => {
                             <Button severity="success" icon="pi pi-save" :disabled="!selectedFile || examStore.exportInProgress" @click="onFileUpload" :loading="examStore.loading" />
                         </div>
                     </div>
-                    {{ examineeList }}
                     <DataTable
                         lazy
                         ref="dt"
