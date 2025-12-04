@@ -450,6 +450,7 @@ const generateCertificate = async () => {
                             <Button severity="success" icon="pi pi-save" :disabled="!selectedFile || examStore.exportInProgress" @click="onFileUpload" :loading="examStore.loading" />
                         </div>
                     </div>
+                    {{ examineeList }}
                     <DataTable
                         lazy
                         ref="dt"
@@ -560,13 +561,15 @@ const generateCertificate = async () => {
                         <Column header="Obtained Mark" field="Total Mark">
                             <!-- :disabled="!selectedExaminee.includes(data)" -->
                             <template #body="{ data }">
-                                <InputNumber v-model="data.exam_mark.obtained_mark" :useGruping="false" :max="examStore.examConfig.total_marks" placeholder="Enter obtained mark" :maxFractionDigits="2" disabled />
+                                <!-- <InputNumber v-model="data.exam_mark.obtained_mark" :useGruping="false" :max="examStore.examConfig.total_marks" placeholder="Enter obtained mark" :maxFractionDigits="2" disabled /> -->
+
+                                <InputNumber v-model="(data.exam_mark || {}).obtained_mark" :useGruping="false" :max="examStore.examConfig.total_marks" placeholder="Enter obtained mark" :maxFractionDigits="2" disabled />
                             </template>
                         </Column>
 
                         <Column header="Obtained Grade">
                             <template #body="{ data }">
-                                {{ data.exam_mark.obtained_grade }}
+                                {{ data.exam_mark?.obtained_grade }}
                             </template>
                         </Column>
 
